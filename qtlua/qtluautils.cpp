@@ -2,6 +2,7 @@
 
 #include "qtluautils.h"
 #include "qtluaengine.h"
+#include "lauxlib.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -43,7 +44,7 @@ luaQ_gettable(struct lua_State *L)
 
 
 /*! Same as lua_getfield but returns \a nil
-  if an error occurs while processing the 
+  if an error occurs while processing the
   metatable \a __index event. */
 
 void
@@ -69,6 +70,7 @@ luaQ_getfield(struct lua_State *L, int index, const char *name)
 
 
 
+
 // ========================================
 // Error handlers
 
@@ -89,16 +91,16 @@ int
 luaQ_tracebackskip(struct lua_State *L, int skip)
 {
   // stack: msg
-  luaQ_getfield(L, LUA_GLOBALSINDEX, "debug");
+  lua_getglobal(L, "debug");
   luaQ_getfield(L, -1, "traceback");
   // stack: traceback debug msg
   lua_remove(L, -2);
   // stack: traceback msg
-  if (! lua_isfunction(L, -1)) 
+  if (! lua_isfunction(L, -1))
     {
       lua_pop(L, 1);
-    } 
-  else 
+    }
+  else
     {
       lua_pushvalue(L, -2);
       lua_pushinteger(L, skip+1);
@@ -141,21 +143,21 @@ luaQ_traceback(struct lua_State *L)
 
 
 /*! Returns potential completion for a string.
-  Takes as input a single string composed of 
-  identifiers separated by '.' or ':' and returns a table 
+  Takes as input a single string composed of
+  identifiers separated by '.' or ':' and returns a table
   representing an array of potential completions.
-  Each completion is a string that could be reasonably 
+  Each completion is a string that could be reasonably
   appended to the initial argument.
   This function throws errors when something goes wrong.
   Use \a pcall to call it safely. */
 
-int 
+int
 luaQ_complete(struct lua_State *L)
 {
   int k = 0;
   int loop = 0;
   const char *stem = luaL_checkstring(L, 1);
-  lua_pushvalue(L, LUA_GLOBALSINDEX);
+  lua_pushglobaltable(L);
   for(;;)
     {
       const char *s = stem;
@@ -215,12 +217,12 @@ luaQ_complete(struct lua_State *L)
           if (ok)
             {
               const char *suffix = "";
-              switch (lua_type(L, -1)) 
+              switch (lua_type(L, -1))
                 {
-                case LUA_TFUNCTION: 
-                  suffix = "("; 
+                case LUA_TFUNCTION:
+                  suffix = "(";
                   break;
-                case LUA_TTABLE: 
+                case LUA_TTABLE:
                   suffix = ".";
                   luaQ_getfield(L, -1, "_C");
                   if (lua_istable(L, -1))
@@ -237,7 +239,7 @@ luaQ_complete(struct lua_State *L)
                   else if (lua_getmetatable(L, -1)) {
                     lua_pop(L, 1);
                     suffix = ":";
-                  } else 
+                  } else
                     suffix = "";
                 } break;
                 default:
@@ -302,7 +304,7 @@ luaQ_print(lua_State *L, int nr)
   int base = lua_gettop(L);
   nr = qMin(lua_gettop(L), nr);
   if (nr <= 0)
-    return 0; 
+    return 0;
   lua_getglobal(L, "print");
   if (lua_type(L, -1) != LUA_TFUNCTION)
     {
@@ -331,7 +333,7 @@ luaQ_print(lua_State *L, int nr)
 
 
 
-int 
+int
 luaQ_pcall(lua_State *L, int na, int nr, int eh, int oh)
 {
   QtLuaEngine *engine = luaQ_engine(L);
@@ -354,12 +356,12 @@ luaQ_pcall(lua_State *L, int na, int nr, int eh, int oh)
 static int
 qt_connect(lua_State *L)
 {
-  // LUA: "qt.connect(object signal closure)" 
+  // LUA: "qt.connect(object signal closure)"
   // Connects signal to closure.
-  
+
   // LUA: "qt.connect(object signal object signal_or_slot)"
   // Connects signal to signal or slot.
-  
+
   QObject *obj = luaQ_checkqobject<QObject>(L, 1);
   const char *sig = luaL_checkstring(L, 2);
   QObject *robj = luaQ_toqobject(L, 3);
@@ -374,7 +376,7 @@ qt_connect(lua_State *L)
           rsig = QMetaObject::normalizedSignature(rsig.constData());
           idx = mo->indexOfMethod(rsig.constData());
           if (idx < 0)
-            luaL_error(L, "cannot find target slot or signal %s", 
+            luaL_error(L, "cannot find target slot or signal %s",
                        rsig.constData());
         }
       // prepend signal or slot indicator
@@ -410,7 +412,7 @@ qt_disconnect(lua_State *L)
 {
   // LUA: qt.disconnect(object [signal [closure]])
   // LUA: qt.disconnect(object signal object signal_or_slot)
-  // Disconnect all connections between 
+  // Disconnect all connections between
   // the specified signal and a lua function.
   // Returns boolean indicating if such signal were found.
   bool ok = false;
@@ -437,8 +439,10 @@ qt_disconnect(lua_State *L)
       int findex = 3;
       if (lua_isnoneornil(L, 3))
         findex = 0;
-      else if (! lua_isfunction(L, 3))
-        luaL_typerror(L, 3, "function");
+      else if (! lua_isfunction(L, 3)) {
+        lua_pushstring(L, "function");
+        lua_error(L);
+      }
       ok = luaQ_disconnect(L, obj, sig, findex);
     }
   lua_pushboolean(L, ok);
@@ -531,15 +535,15 @@ qt_isa(lua_State *L)
 
 // {{{ functions copied or derived from loadlib.c
 
-static int readable (const char *filename) 
-{  
+static int readable (const char *filename)
+{
   FILE *f = fopen(filename, "r");  /* try to open file */
   if (f == NULL) return 0;  /* open failed */
   fclose(f);
   return 1;
 }
 
-static const char *pushnexttemplate (lua_State *L, const char *path) 
+static const char *pushnexttemplate (lua_State *L, const char *path)
 {
   const char *l;
   while (*path == *LUA_PATHSEP) path++;  /* skip separators */
@@ -550,16 +554,16 @@ static const char *pushnexttemplate (lua_State *L, const char *path)
   return l;
 }
 
-static const char *pushfilename (lua_State *L, const char *name) 
+static const char *pushfilename (lua_State *L, const char *name)
 {
   const char *path;
   const char *filename;
-  luaQ_getfield(L, LUA_GLOBALSINDEX, "package");
+  lua_getglobal(L, "package");
   luaQ_getfield(L, -1, "cpath");
   lua_remove(L, -2);
   if (! (path = lua_tostring(L, -1)))
     luaL_error(L, LUA_QL("package.cpath") " must be a string");
-  lua_pushliteral(L, ""); 
+  lua_pushliteral(L, "");
   while ((path = pushnexttemplate(L, path))) {
     filename = luaL_gsub(L, lua_tostring(L, -1), "?", name);
     lua_remove(L, -2);
@@ -599,7 +603,7 @@ qt_require(lua_State *L)
   lua_pushfstring(L, "luaopen_%s", name);  // index 4
   lua_CFunction func = (lua_CFunction)library.resolve(lua_tostring(L, -1));
   if (! func)
-    luaL_error(L, "no symbol " LUA_QS " in module " LUA_QS, 
+    luaL_error(L, "no symbol " LUA_QS " in module " LUA_QS,
                lua_tostring(L, -1), filename);
   lua_pushboolean(L, 1);
   lua_setfield(L, 2, name);
@@ -683,13 +687,13 @@ hide_deletelater(lua_State *L, const QMetaObject *mo)
 }
 
 
-int  
+int
 luaopen_qt(lua_State *L)
 {
   const char *qt = luaL_optstring(L, 1, "qt");
   luaQ_pushqt(L);
   lua_pushvalue(L, -1);
-  lua_setfield(L, LUA_GLOBALSINDEX, qt);
+  lua_setglobal(L, qt);
   luaL_register(L, qt, qt_lib);
 
   // Add qt_m_index in a metatable

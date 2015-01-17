@@ -9,6 +9,8 @@ extern "C" {
 }
 #include "qtluaconf.h"
 
+#define LUA_PATHSEP ";"
+
 #ifdef WIN32
 # ifdef libqtlua_EXPORTS
 #  define QTLUAAPI __declspec(dllexport)

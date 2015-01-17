@@ -34,8 +34,8 @@ extern "C" {
 // ========================================
 // Declaration
 
-static int luaQ_pcall(lua_State *L, 
-                      int na, int nr, int eh, 
+static int luaQ_pcall(lua_State *L,
+                      int na, int nr, int eh,
                       QObject *obj, bool async);
 
 
@@ -48,8 +48,8 @@ typedef QVector<QVariant> VarVector;
 
 struct QtLuaMethodInfo
 {
-  struct Detail { 
-    int id; 
+  struct Detail {
+    int id;
     PtrVector types;
   };
   const QMetaObject *metaObject;
@@ -57,7 +57,7 @@ struct QtLuaMethodInfo
 };
 
 Q_DECLARE_METATYPE(QtLuaMethodInfo)
-  
+
 struct QtLuaPropertyInfo
 {
   int id;
@@ -87,7 +87,7 @@ static const char *qtKey = "qt";
 // _R[qtKey] : qt package.
 // _R[qtKey].typename : class for metatype "typename".
 // _R[qtKey].classname : class for metaobject "classname".
-// _R[metaKey][typeid] : metatable for metatype (by typeid) 
+// _R[metaKey][typeid] : metatable for metatype (by typeid)
 // _R[metaKey][metaobjectptr] : metatable for metaobject (by ptr)
 // _R[objectKey][objectptr] : lua value for qobject (weak table)
 // _R[signalKey][receiverptr] : closure for signal receiver.
@@ -116,8 +116,8 @@ luaQ_setup(lua_State *L, QtLuaEngine::Private *d)
   lua_rawset(L, LUA_REGISTRYINDEX);
   // objects [weak table]
   lua_pushlightuserdata(L, (void*)objectKey);
-  lua_createtable(L, 0, 0); 
-  lua_createtable(L, 0, 1); 
+  lua_createtable(L, 0, 0);
+  lua_createtable(L, 0, 1);
   lua_pushliteral(L, "v");
   lua_setfield(L, -2, "__mode");
   lua_setmetatable(L, -2);
@@ -127,8 +127,8 @@ luaQ_setup(lua_State *L, QtLuaEngine::Private *d)
   lua_createtable(L, 0, 0);
   lua_rawset(L, LUA_REGISTRYINDEX);
   // package.preload["qt"]
-  lua_getfield(L, LUA_GLOBALSINDEX, "package");
-  if (lua_istable(L, -1)) 
+  lua_getglobal(L, "package");
+  if (lua_istable(L, -1))
     {
       lua_getfield(L, -1, "preload");
       if (lua_istable(L, -1))
@@ -181,7 +181,7 @@ struct QtLuaEngine::Global {
 Q_GLOBAL_STATIC(QtLuaEngine::Global, qtLuaEngineGlobal);
 
 
-void 
+void
 QtLuaEngine::Global::registerMetaObject(const QMetaObject *mo, bool super)
 {
   QMutexLocker locker(&mutex);
@@ -334,18 +334,18 @@ QtLuaEngine::Private::Private(QtLuaEngine *parent)
   luaL_openlibs(L);
   luaQ_setup(L, this);
   // delayed connections
-  connect(this, SIGNAL(readySignal()), 
+  connect(this, SIGNAL(readySignal()),
           this, SLOT(readySlot()),
           Qt::QueuedConnection );
-  connect(this, SIGNAL(queueSignal()), 
+  connect(this, SIGNAL(queueSignal()),
           this, SLOT(queueSlot()),
           Qt::QueuedConnection );
-  connect(this, SIGNAL(stopSignal()), 
+  connect(this, SIGNAL(stopSignal()),
           this, SLOT(stopSlot()),
           Qt::QueuedConnection );
-  connect(this, SIGNAL(stateChanged(int)), 
+  connect(this, SIGNAL(stateChanged(int)),
           q, SIGNAL(stateChanged(int)));
-  connect(this, SIGNAL(errorMessage(QByteArray)), 
+  connect(this, SIGNAL(errorMessage(QByteArray)),
           q, SIGNAL(errorMessage(QByteArray)));
 }
 
@@ -385,7 +385,7 @@ QtLuaEngine::Private::objectDestroyed(QObject *obj)
 }
 
 
-bool 
+bool
 QtLuaEngine::Private::isObjectLuaOwned(QObject *obj)
 {
   QMutexLocker locker(&mutex);
@@ -393,7 +393,7 @@ QtLuaEngine::Private::isObjectLuaOwned(QObject *obj)
 }
 
 
-void 
+void
 QtLuaEngine::Private::makeObjectLuaOwned(QObject *obj)
 {
   if (obj)
@@ -415,7 +415,7 @@ queue_sub(QtLuaEngine::Private *d, QMutexLocker &locker)
   Q_ASSERT(!d->lockCount && !d->hopEvent && !d->hopLoop);
   d->lockCount = 1;
   d->lockThread = mythread;
-  d->processQueuedSignals(locker); 
+  d->processQueuedSignals(locker);
   if (! d->queuedSignals.isEmpty())
     d->emitQueueSignal();
   d->lockCount = 0;
@@ -424,7 +424,7 @@ queue_sub(QtLuaEngine::Private *d, QMutexLocker &locker)
 }
 
 
-void 
+void
 QtLuaEngine::Private::readySlot()
 {
   QMutexLocker locker(&mutex);
@@ -442,14 +442,14 @@ QtLuaEngine::Private::readySlot()
 }
 
 
-void 
+void
 QtLuaEngine::Private::queueSlot()
 {
   QMutexLocker locker(&mutex);
   if (pauseLoop && ! hookInfo)
     {
       Q_ASSERT(rflag);
-      QEventLoop *savedLoop = pauseLoop; 
+      QEventLoop *savedLoop = pauseLoop;
       lua_Debug *savedInfo = hookInfo;
       pauseLoop = 0;
       hookInfo = 0;
@@ -479,7 +479,7 @@ QtLuaEngine::Private::queueSlot()
         lua_sethook(L, hookFunction, hookMask, hookCount);
       locker.unlock();
       if (stateChanged)
-        emit q->stateChanged(QtLuaEngine::Ready);    
+        emit q->stateChanged(QtLuaEngine::Ready);
     }
 }
 
@@ -493,7 +493,7 @@ QtLuaEngine::Private::queueSlot()
 
 /*! Returns the engine state. */
 
-QtLuaEngine::State 
+QtLuaEngine::State
 QtLuaEngine::state() const
 {
   QMutexLocker locker(&d->mutex);
@@ -529,7 +529,7 @@ QtLuaEngine::isPausedOnError() const
 
 /*! \signal stateChanged(State state)
   Posted when the engine state changes.
-  When this message is received, 
+  When this message is received,
   the engine state might have changed again! */
 
 
@@ -544,9 +544,9 @@ QtLuaEngine::isPausedOnError() const
 
 /*! \class QtLuaLocker
   This class safely locks a \a QtLuaEngine.
-  The constructor acquires the lock 
+  The constructor acquires the lock
   and the destructor releases the lock.
-  The \a lua_State can then be safely 
+  The \a lua_State can then be safely
   accessed by casting an instance of this class. */
 
 
@@ -576,7 +576,7 @@ QtLuaLocker::~QtLuaLocker()
 }
 
 
-/*! Constructor. 
+/*! Constructor.
   This constructor acquires a lock,
   waiting as long as necessary. */
 
@@ -601,10 +601,10 @@ QtLuaLocker::QtLuaLocker(QtLuaEngine *engine)
 
 
 
-/*! Alternate constructor. 
+/*! Alternate constructor.
   This constructor attempts to acquire a lock
   waiting at most \a timeOut milliseconds.
-  To see if the lock has been acquired, 
+  To see if the lock has been acquired,
   use the \a lua_State* conversion operator
   or use the \a isReady() function. */
 
@@ -630,8 +630,8 @@ QtLuaLocker::QtLuaLocker(QtLuaEngine *engine, int timeOut)
 
 
 /*! \fn bool isReady()
-  Returns true if the locking operation was 
-  successful and the interpreter is in ready state. 
+  Returns true if the locking operation was
+  successful and the interpreter is in ready state.
   Note that locking and state are distinct concepts.
   It is possible to lock a running interpreter
   while it is waiting for other events.
@@ -641,19 +641,19 @@ QtLuaLocker::QtLuaLocker(QtLuaEngine *engine, int timeOut)
 
 /*! \fn operator lua_State*
   Accesses the \a lua_State underlying the locked engine.
-  This provides the only safe way to access 
+  This provides the only safe way to access
   the \a lua_State variable. */
 
 
-/*! Calling this function after a successful lock 
+/*! Calling this function after a successful lock
   causes the engine to transition to state \a Running.
   The engine will return to state \a Ready after
-  the destruction of the last \a QtLuaLocker object 
+  the destruction of the last \a QtLuaLocker object
   and the execution of the command queue.
-  Temporary releasing the lock with \a unlock() 
+  Temporary releasing the lock with \a unlock()
   keeps the engine in state \a Running. */
 
-void 
+void
 QtLuaLocker::setRunning()
 {
   bool stateChanged = false;
@@ -680,8 +680,8 @@ QtLuaLocker::setRunning()
 
 /*! \class QtLuaEngine
   Class \a QtLuaEngine represents a Lua interpreter.
-  This object can be used to add a Lua interpreter 
-  to any Qt application with capabilities 
+  This object can be used to add a Lua interpreter
+  to any Qt application with capabilities
   comparable to those of the QtScript language
   and additional support for multi-threaded execution.
 
@@ -694,13 +694,13 @@ QtLuaLocker::setRunning()
   was suspended while executing a Lua program. One can then
   use the Lua debug library to investigage the Lua state.
 
-  Class \a QtLuaEngine provides member functions to 
-  submit Lua strings to the interpreter and to collect 
+  Class \a QtLuaEngine provides member functions to
+  submit Lua strings to the interpreter and to collect
   the evaluation results.  If these functions are invoked
   from the thread owning the Lua engine object,
-  the Lua code is executed right away. 
+  the Lua code is executed right away.
   Otherwise a thread hopping operation with \a luaQ_pcall
-  ensures that the execution of a Lua program happens 
+  ensures that the execution of a Lua program happens
   in the thread owning the Lua engine object. */
 
 
@@ -754,19 +754,19 @@ QtLuaEngine::QtLuaEngine(QObject *parent)
 }
 
 
-/*! Registering a metaobject allows the engine 
-  to recognize qobject classes by name in method 
-  and signal arguments. This happens automatically 
+/*! Registering a metaobject allows the engine
+  to recognize qobject classes by name in method
+  and signal arguments. This happens automatically
   when a qobject is translated into a lua userdata,
   or, more generally, whenever \a luaQ_pushmeta is called.
-  In rare occasions, it may be necessary to manually 
-  register a meta object, for instance when a scriptable 
+  In rare occasions, it may be necessary to manually
+  register a meta object, for instance when a scriptable
   method returns a qobject whose class has not been previously
   registered and is not a superclass of the current class,
   or when one connects a signal whose arguments are
   qobjects whose class has not been previously registered. */
 
-void 
+void
 QtLuaEngine::registerMetaObject(const QMetaObject *mo)
 {
   qtLuaEngineGlobal()->registerMetaObject(mo);
@@ -774,11 +774,11 @@ QtLuaEngine::registerMetaObject(const QMetaObject *mo)
 
 
 /*! Make a \a QObject accessible to the interpreter by name.
-  Use the Qt object name when string \a name is not provided. 
+  Use the Qt object name when string \a name is not provided.
   The lua engine keeps tracking the object when its name
   is reset or changed. */
 
-void 
+void
 QtLuaEngine::nameObject(QObject *object, QString name)
 {
   if (object)
@@ -823,8 +823,8 @@ QtLuaEngine::namedObject(QString name)
 
 /*! Return the list of all named objects. */
 
-QList<QObjectPointer> 
-QtLuaEngine::allNamedObjects() 
+QList<QObjectPointer>
+QtLuaEngine::allNamedObjects()
 {
   QObject *obj;
   QList<QObjectPointer> list;
@@ -846,12 +846,12 @@ QtLuaEngine::lastErrorMessage() const
 
 
 /*! \property QtLuaEngine::lastErrorLocation
-  Contains the location associated with the 
+  Contains the location associated with the
   last error message reported with signal \a errorMessage.
-  When the location corresponds to a file, 
+  When the location corresponds to a file,
   this string has the format "@filename:linenumber". */
 
-QStringList 
+QStringList
 QtLuaEngine::lastErrorLocation() const
 {
   QStringList list;
@@ -867,14 +867,14 @@ QtLuaEngine::lastErrorLocation() const
   Indicates whether the results of an \a eval()
   must be printed on the standard output. */
 
-bool 
+bool
 QtLuaEngine::printResults() const
 {
   return d->printResults;
 }
 
 
-void 
+void
 QtLuaEngine::setPrintResults(bool b)
 {
   d->printResults = b;
@@ -885,14 +885,14 @@ QtLuaEngine::setPrintResults(bool b)
   Indicates whether error messages
   must be printed on the standard output. */
 
-bool 
+bool
 QtLuaEngine::printErrors() const
 {
   return d->printErrors;
 }
 
 
-void 
+void
 QtLuaEngine::setPrintErrors(bool b)
 {
   d->printErrors = b;
@@ -903,17 +903,17 @@ QtLuaEngine::setPrintErrors(bool b)
 /*! \property QtLuaEngine::pauseOnError
   Indicates whether the default error handler
   should pause execution when an error occurs
-  as if \a pause() had been called from 
+  as if \a pause() had been called from
   the error handler. */
 
-bool 
+bool
 QtLuaEngine::pauseOnError() const
 {
   return d->pauseOnError;
 }
 
 
-void 
+void
 QtLuaEngine::setPauseOnError(bool b)
 {
   d->pauseOnError = b;
@@ -922,10 +922,10 @@ QtLuaEngine::setPauseOnError(bool b)
 
 /*! \property QtLuaEngine::runSignalHandlers
   This property is true when the Lua interpreter
-  honors the signal handler invokations immediately 
+  honors the signal handler invokations immediately
   instead of queuing them for further processing. */
 
-bool 
+bool
 QtLuaEngine::runSignalHandlers() const
 {
   QMutexLocker locker(&d->mutex);
@@ -979,7 +979,7 @@ QtLuaEngine::Private::stopHook(lua_State *L, lua_Debug *ar)
   lua_pushliteral(L, "stop");
   luaQ_tracebackskip(L, 1);
   bool stateChanged = false;
-  if (d) 
+  if (d)
     {
       QMutexLocker locker(&d->mutex);
       lua_Debug *savedInfo = d->hookInfo;
@@ -1034,12 +1034,12 @@ find_error_location(lua_State *L, QByteArray &message)
   int maxlevel = 8;
   int level = 0;
   lua_Debug ar;
-  while (level < maxlevel && lua_getstack(L, level++, &ar)) 
+  while (level < maxlevel && lua_getstack(L, level++, &ar))
     {
       lua_getinfo(L, "Snl", &ar);
       if (ar.currentline > 0)
         {
-          loc = QByteArray(ar.source) + ":" + 
+          loc = QByteArray(ar.source) + ":" +
             QByteArray::number(ar.currentline);
           if (list.isEmpty() || list.last() != loc)
             list.append(loc);
@@ -1055,7 +1055,7 @@ lua_error_handler(lua_State *L)
   QtLuaEngine::Private *d = luaQ_private_noerr(L);
   const char *m = lua_tostring(L, -1);
   if (m && strstr(m, "\nstack traceback:\n\t"))
-    return 1;  // hack alert (see lua/src/ldblib.c) 
+    return 1;  // hack alert (see lua/src/ldblib.c)
   luaQ_tracebackskip(L, 1);
   QByteArray message = lua_tostring(L, -1);
   QList<QByteArray> location = find_error_location(L, message);
@@ -1078,7 +1078,7 @@ lua_error_handler(lua_State *L)
 
 
 
-bool 
+bool
 QtLuaEngine::Private::stopHelper(bool unwind)
 {
   unwindStack |= unwind;
@@ -1094,7 +1094,7 @@ QtLuaEngine::Private::stopHelper(bool unwind)
   return true;
 }
 
-bool 
+bool
 QtLuaEngine::Private::resumeHelper(int retcode)
 {
   if (pauseLoop)
@@ -1106,7 +1106,7 @@ QtLuaEngine::Private::resumeHelper(int retcode)
 /*! Stops the lua execution as soon as practicable.
   If flag \a nopause if false, the interpreter
   will transition to the paused state until someone
-  calls \a resume(). Otherwise  the interpreter stops 
+  calls \a resume(). Otherwise  the interpreter stops
   executing, unwinds the stack, and returns to ready state. */
 
 bool
@@ -1122,11 +1122,11 @@ QtLuaEngine::stop(bool nopause)
 
 
 /*! Resume execution after a \a pause().
-  Returns \a false when called when the engine is not in paused state. 
+  Returns \a false when called when the engine is not in paused state.
   When argument \a nocontinue is true, the interpreter
   stops executing, unwinds the stack, and returns to ready state. */
 
-bool 
+bool
 QtLuaEngine::resume(bool nocontinue)
 {
   QMutexLocker locker(&d->mutex);
@@ -1161,18 +1161,18 @@ lua_eval_func(lua_State *L)
   returns \a false if the \a QtLuaEngine instance
   state is not "ready" or when one requests
   an asynchronous call from the engine thread.
-  Evaluation takes place in the thread 
+  Evaluation takes place in the thread
   owning the \a QtLuaEngine instance.
   Synchronous calls are performed by setting
-  flag \a async is \a false. The function waits 
-  until the evaluation terminates regardless of 
+  flag \a async is \a false. The function waits
+  until the evaluation terminates regardless of
   the thread from which it is called.
   Asynchronous calls are performed by setting
   flag \a async to \a true and calling this
   function from a thread other than the thread
   owning the \a QtLuaEngine instance. */
 
-bool 
+bool
 QtLuaEngine::eval(QByteArray s, bool async)
 {
   QtLuaLocker lua(this);
@@ -1202,13 +1202,13 @@ QtLuaEngine::eval(QString s, bool async)
   called when the engine is not in ready state.
   If an error occurs during evaluation, it returns a list
   whose first element is \a QVariant(false) and whose
-  second element is the error message. 
+  second element is the error message.
   Otherwise is returns a list whose first element is
   \a QVariant(true) and whose remaining elements
   are the evaluation results.
 */
 
-QVariantList 
+QVariantList
 QtLuaEngine::evaluate(QByteArray s)
 {
   QVariantList results;
@@ -1231,7 +1231,7 @@ QtLuaEngine::evaluate(QByteArray s)
 
 /*! \overload */
 
-QVariantList 
+QVariantList
 QtLuaEngine::evaluate(QString s)
 {
   return evaluate(s.toLocal8Bit());
@@ -1254,7 +1254,7 @@ public:
 public slots:
   void destroy() { delete this; }
 };
-  
+
 
 bool
 QtLuaEngine::Catcher::event(QEvent *e)
@@ -1272,31 +1272,31 @@ QtLuaEngine::Catcher::event(QEvent *e)
   bool rflag = d->rflag;
   int stacktop = lua_gettop(d->L);
   int status = LUA_ERRRUN;
-  if (d->unwindStack)  
+  if (d->unwindStack)
     {
       lua_pushliteral(d->L, "stop (unwinding stack)");
     }
-  else try 
-    { 
+  else try
+    {
       d->rflag = true;
       locker.unlock();
       if (! rflag)
         d->emitStateChanged(QtLuaEngine::Running);
       status = lua_pcall(d->L, d->hopNA, d->hopNR, d->hopEH);
       locker.relock();
-    } 
-  catch(...) 
+    }
+  catch(...)
     {
       lua_settop(d->L, stacktop);
       lua_pushliteral(d->L, "uncaught c++ exception");
     }
   d->lockCount = 0;
-  if (d->hopLoop) 
+  if (d->hopLoop)
     d->hopLoop->exit(status);
   else
     d->emitReadySignal();
-  // We use a timer because calling 'delete this' 
-  // in an event handler is not supported and 
+  // We use a timer because calling 'delete this'
+  // in an event handler is not supported and
   // because 'deleteLater' waits until the
   // current eventloop returns...
   QTimer::singleShot(0, this, SLOT(destroy()));
@@ -1314,9 +1314,9 @@ public:
 };
 
 
-bool 
-QtLuaEngine::Unlocker::event(QEvent *e) 
-{ 
+bool
+QtLuaEngine::Unlocker::event(QEvent *e)
+{
   if (e->type() != QEvent::User)
     return false;
   d->mutex.lock();
@@ -1374,11 +1374,11 @@ luaQ_pcall(lua_State *L, int na, int nr, int eh, QObject *obj, bool async)
           d->hopLoop = &loop;
           // The catcher will soon get the hopEvent message
           // and run lua_pcall() in the receiving thread.
-          // Then it calls exit() causing us to leave the 
+          // Then it calls exit() causing us to leave the
           // event loop and resume execution in this thread.
           // For this to happen we need to unlock the engine
           // and signal hopCondition. But we cannot do it right now
-          // because the other thread might complete even before 
+          // because the other thread might complete even before
           // we call loop.exec(). Posting a message to the Unlocker
           // object ensures that unlock happens after exec() has started.
           // This is not very high-performance :-(.
@@ -1401,10 +1401,10 @@ luaQ_pcall(lua_State *L, int na, int nr, int eh, QObject *obj, bool async)
 /*! Thread hopping version of \a lua_pcall().
   This function is similar to \a lua_pcall() but
   arranges the execution to happen in the
-  thread of the Qt object \a obj. 
-  This only works if the target thread is running an event loop. 
-  The current thread then runs an event loop until 
-  being notified of the call results.  
+  thread of the Qt object \a obj.
+  This only works if the target thread is running an event loop.
+  The current thread then runs an event loop until
+  being notified of the call results.
   When \a obj is null, the application object
   is assumed (ensuring the code runs in the gui thread). */
 
@@ -1416,7 +1416,7 @@ luaQ_pcall(lua_State *L, int na, int nr, int eh, QObject *obj)
 
 
 /*! Convenience function.
-    Same as "luaQ_pcall(L,na,nr,0,obj) || lua_error(L)". 
+    Same as "luaQ_pcall(L,na,nr,0,obj) || lua_error(L)".
     Unlike \a lua_call() this function calls
     the function with the default error handler
     instead of the current error handler. */
@@ -1444,7 +1444,7 @@ call_in_obj_thread(lua_State *L)
   // object
   lua_pushvalue(L, lua_upvalueindex(2));
   QObject *obj = luaQ_toqobject(L, -1);
-  lua_pop(L, 1); 
+  lua_pop(L, 1);
   // function
   lua_pushvalue(L, lua_upvalueindex(1));
   Q_ASSERT(lua_isfunction(L, -1));
@@ -1461,8 +1461,10 @@ call_in_arg_thread(lua_State *L)
   int narg = lua_gettop(L);
   // object
   QObject *obj = luaQ_toqobject(L, 1);
-  if (! obj) 
-    luaL_typerror(L, 1, "qobject");
+  if (! obj) {
+    lua_pushstring(L, "qobject");
+    lua_error(L);
+  }
   // function
   lua_pushvalue(L, lua_upvalueindex(1));
   Q_ASSERT(lua_isfunction(L, -1));
@@ -1479,7 +1481,7 @@ call_in_arg_thread(lua_State *L)
   in the thread of their first argument (which must be a qobject).
   This is handy to define methods in metaclasses. */
 
-void 
+void
 luaQ_register(lua_State *L, const luaL_Reg *l, QObject *obj)
 {
   while (l->name)
@@ -1530,7 +1532,7 @@ static QVariant *
 luaQ_toqvariantp(lua_State *L, int index)
 {
   QVariant *vp = 0;
-  if (lua_isuserdata(L, index) && 
+  if (lua_isuserdata(L, index) &&
       lua_getmetatable(L, index))
     {
       lua_rawget(L, LUA_REGISTRYINDEX);
@@ -1549,7 +1551,7 @@ qvariant_has_object_type(const QVariant *vp)
   int type = vp->userType();
   return (type == qMetaTypeId<QObjectPointer>() ||
           type == QMetaType::QObjectStar ||
-          type == QMetaType::QWidgetStar );
+          vp->canConvert(type));
 }
 
 
@@ -1581,12 +1583,12 @@ qvariant_to_object(const QVariant *vp, const QMetaObject *mo)
 }
 
 
-/*! Extract \a QVariant from the lua value located 
-  at position \a index in the stack. 
+/*! Extract \a QVariant from the lua value located
+  at position \a index in the stack.
   Standard lua types are converted to \a QVariant
   as needed. */
 
-QVariant 
+QVariant
 luaQ_toqvariant(lua_State *L, int index, int type)
 {
   QVariant v;
@@ -1607,9 +1609,9 @@ luaQ_toqvariant(lua_State *L, int index, int type)
       v = *vp;
       break; }
     case LUA_TSTRING: {
-      size_t l; 
+      size_t l;
       const char *s = lua_tolstring(L, index, &l);
-      v = QVariant(QByteArray(s, l)); 
+      v = QVariant(QByteArray(s, l));
       break; }
     default:
       break;
@@ -1649,7 +1651,7 @@ luaQ_toqobject(lua_State *L, int index, const QMetaObject *mo)
    of the thread that destroys the variant.
    Yes this is tricky. */
 
-bool 
+bool
 QtLuaEngine::Protector::maybeProtect(const QVariant &var)
 {
   if (QThread::currentThread() == QCoreApplication::instance()->thread())
@@ -1666,7 +1668,7 @@ QtLuaEngine::Protector::maybeProtect(const QVariant &var)
     }
 }
 
-bool 
+bool
 QtLuaEngine::Protector::protect(const QVariant &var)
 {
   QMutexLocker lock(&mutex);
@@ -1677,13 +1679,13 @@ QtLuaEngine::Protector::protect(const QVariant &var)
   return true;
 }
 
-bool 
+bool
 QtLuaEngine::Protector::event(QEvent *e)
 {
   if (e->type() == QEvent::User)
     {
       QMutexLocker lock(&mutex);
-      saved.clear(); // possible actual deletion 
+      saved.clear(); // possible actual deletion
       return true;
     }
   return QObject::event(e);
@@ -1715,7 +1717,7 @@ luaQ_m__type(lua_State *L)
   // LUA: "_val_:type()"
   // Returns a string describing the type of a qt value.
   // Returns nil if _val_ is not a qt value.
-  if (lua_isuserdata(L, 1) && 
+  if (lua_isuserdata(L, 1) &&
       lua_getmetatable(L, 1))
     {
       lua_pushliteral(L, "__typename");
@@ -1748,7 +1750,7 @@ luaQ_m__isa(lua_State *L)
     {
       const QMetaObject *mo = obj->metaObject();
       int tlen = strlen(t);
-      if (tlen>0 && t[tlen-1]=='*')    
+      if (tlen>0 && t[tlen-1]=='*')
         tlen -= 1;
       while (mo && !b)
         {
@@ -1870,8 +1872,10 @@ luaQ_m__getsetproperty(lua_State *L)
     static_cast<const QtLuaPropertyInfo*>(vp->constData());
   const QMetaProperty &mp = info->metaProperty;
   QObject *obj = luaQ_toqobject(L, 1, info->metaObject);
-  if (! obj)
-    luaL_typerror(L, 0, info->metaObject->className());
+  if (! obj) {
+    lua_pushstring(L, info->metaObject->className());
+    lua_error(L);
+  }
   if (! mp.isScriptable(obj))
     luaL_error(L, "property " LUA_QS " is not scriptable", mp.name());
   if (lua_gettop(L) == 1)
@@ -1982,7 +1986,7 @@ construct_arg(QVariant &var, void *vtype)
   if (type == qMetaTypeId<QVariant>())
     return static_cast<void*>(new QVariant(var));
   else if (type && (var.userType() == type || var.convert(QVariant::Type(type))))
-    return QMetaType::construct(type, var.constData());
+    return QMetaType::create(type, var.constData());
   else if (mo && (obj = qvariant_to_object(&var)))
     return static_cast<void*>(new QObject*(obj));
   return 0;
@@ -2017,7 +2021,7 @@ construct_retval(void *vtype)
   else if (type == qMetaTypeId<QVariant>())
     return static_cast<void*>(new QVariant());
   else if (type)
-    return QMetaType::construct(type);
+    return QMetaType::create(type);
   return 0;
 }
 
@@ -2079,7 +2083,7 @@ select_overload(VarVector &vars, const QtLuaMethodInfo *info)
   int i;
   int b = -1;
   int bn = 0;
-  int narg = vars.size(); 
+  int narg = vars.size();
   for (i=0; i<overloads; i++)
     if (narg == info->d[i].types.size())
       { b = i; bn += 1; }
@@ -2137,11 +2141,11 @@ luaQ_m__invokemethod(lua_State *L)
   const QVariant* vp = luaQ_toqvariantp(L, narg  + 1);
   if (vp->userType() != qMetaTypeId<QtLuaMethodInfo>())
     luaL_error(L, "internal error while invoking method");
-  const QtLuaMethodInfo *info 
+  const QtLuaMethodInfo *info
     = static_cast<const QtLuaMethodInfo*>(vp->constData());
   QObject *obj = luaQ_toqobject(L, 1, info->metaObject);
   if (! obj)
-    luaL_error(L, "bad 'self' argument (%s expected)", 
+    luaL_error(L, "bad 'self' argument (%s expected)",
                info->metaObject->className());
   VarVector vargs(narg);
   for (i=1; i<narg; i++)
@@ -2171,7 +2175,7 @@ luaQ_m__invokemethod(lua_State *L)
         destroy_arg(pargs[arg], d.types[arg]);
       // diagnosis
       if (errarg >= 0)
-        luaL_error(L, "bad argument #%d (%s expected)", 
+        luaL_error(L, "bad argument #%d (%s expected)",
                    errarg, v_to_name(d.types[errarg]) );
     }
   catch(...)
@@ -2207,7 +2211,7 @@ luaQ_m__index(lua_State *L)
   // __index in metatable
   // Check arguments
   QObject *obj = luaQ_checkqobject<QObject>(L, 1);
-  if (lua_getmetatable(L, 1)) 
+  if (lua_getmetatable(L, 1))
     {
       lua_pushliteral(L, "__metatable");
       lua_rawget(L, -2);
@@ -2248,10 +2252,10 @@ luaQ_m__index(lua_State *L)
         luaQ_pushqt(L, o);
         return 1;
       }
-  QObject *o = qFindChild<QObject*>(obj, QString::fromLocal8Bit(key));
-  if (o)
+  QList<QObject*> childList = obj->findChildren<QObject*>(QString::fromLocal8Bit(key));
+  if (childList.count() > 0)
     {
-      luaQ_pushqt(L, o);
+      luaQ_pushqt(L, childList.first());
       return 1;
     }
   // Failed
@@ -2268,7 +2272,7 @@ luaQ_m__newindex(lua_State *L)
   QObject *obj = luaQ_checkqobject<QObject>(L, 1);
   if (lua_getmetatable(L, 1))
     {
-      lua_pushliteral(L, "__metatable"); 
+      lua_pushliteral(L, "__metatable");
       lua_rawget(L, -2);
       // ..stack: object key value metatable metaclass
       // Search property
@@ -2314,7 +2318,7 @@ void
 luaQ_buildmetaclass(lua_State *L, int type)
 {
   // Create table
-  lua_createtable(L, 0, 0); 
+  lua_createtable(L, 0, 0);
   // Fill table
   lua_pushvalue(L, -1);
   lua_setfield(L, -2, "__index");
@@ -2337,7 +2341,7 @@ luaQ_buildmetaclass(lua_State *L, int type)
     }
   // Insert class into qt package
   lua_pushlightuserdata(L, (void*)qtKey);
-  lua_rawget(L, LUA_REGISTRYINDEX); 
+  lua_rawget(L, LUA_REGISTRYINDEX);
   Q_ASSERT(lua_istable(L, -1));
   lua_pushstring(L, QMetaType::typeName(type));
   lua_pushvalue(L, -3);
@@ -2347,7 +2351,7 @@ luaQ_buildmetaclass(lua_State *L, int type)
 }
 
 
-static PtrVector 
+static PtrVector
 make_argtypes(QMetaMethod method)
 {
   PtrVector types;
@@ -2394,7 +2398,7 @@ luaQ_buildmetaclass(lua_State *L, const QMetaObject *mo)
   for  (int i=fm; i<lm; i++)
     {
       QMetaMethod method = mo->method(i);
-      QByteArray sig = method.signature();
+      QByteArray sig = method.methodSignature();
       if (method.access() != QMetaMethod::Private)
         {
           QtLuaMethodInfo::Detail d;
@@ -2448,7 +2452,7 @@ luaQ_buildmetaclass(lua_State *L, const QMetaObject *mo)
     }
   // Insert class into qt package
   lua_pushlightuserdata(L, (void*)qtKey);
-  lua_rawget(L, LUA_REGISTRYINDEX); 
+  lua_rawget(L, LUA_REGISTRYINDEX);
   Q_ASSERT(lua_istable(L, -1));
   lua_pushstring(L, mo->className());
   lua_pushvalue(L, -3);
@@ -2497,7 +2501,7 @@ luaQ_fillmetatable(lua_State *L, int type, const QMetaObject *mo)
 
 /*! Pushes the metatable for qt values with type id \a type. */
 
-void 
+void
 luaQ_pushmeta(lua_State *L, int type)
 {
   lua_pushlightuserdata(L, (void*)metaKey);
@@ -2530,7 +2534,7 @@ luaQ_pushmeta(lua_State *L, int type)
 
 /*! Pushes the metatable for qt objects with meta object \a mo. */
 
-void 
+void
 luaQ_pushmeta(lua_State *L, const QMetaObject *mo)
 {
   lua_pushlightuserdata(L, (void*)metaKey);
@@ -2566,7 +2570,7 @@ luaQ_pushmeta(lua_State *L, const QMetaObject *mo)
 
 /*! Pushes the metatable for qobject \a o. */
 
-void 
+void
 luaQ_pushmeta(lua_State *L, const QObject *o)
 {
   luaQ_pushmeta(L, o->metaObject());
@@ -2574,10 +2578,10 @@ luaQ_pushmeta(lua_State *L, const QObject *o)
 
 
 /*! Pushes value \a var onto the stack.
-  Common variant types are converted 
+  Common variant types are converted
   to standard lua types when applicable. */
 
-void 
+void
 luaQ_pushqt(lua_State *L, const QVariant &var)
 {
   switch(var.userType())
@@ -2605,9 +2609,9 @@ luaQ_pushqt(lua_State *L, const QVariant &var)
       {
         QByteArray b = var.toByteArray();
         lua_pushlstring(L, b.constData(), b.size());
-        break; 
+        break;
       }
-    default: 
+    default:
       if (qvariant_has_object_type(&var))
         {
           luaQ_pushqt(L, qvariant_to_object(&var));
@@ -2618,7 +2622,7 @@ luaQ_pushqt(lua_State *L, const QVariant &var)
           new (v) QVariant(var);
           luaQ_pushmeta(L, var.userType());
           lua_setmetatable(L, -2);
-          break; 
+          break;
         }
     }
 }
@@ -2629,7 +2633,7 @@ luaQ_pushqt(lua_State *L, const QVariant &var)
   be deleted when lua deallocates the object descriptor.
   Null object pointers are converted to lua \a nil value. */
 
-void 
+void
 luaQ_pushqt(lua_State *L, QObject *obj, bool owned)
 {
   if (! obj)
@@ -2673,7 +2677,7 @@ luaQ_pushqt(lua_State *L, QObject *obj, bool owned)
           if (owned)
             {
               QtLuaEngine::Private *d = luaQ_private(L);
-              if (d) 
+              if (d)
                 d->makeObjectLuaOwned(obj);
             }
         }
@@ -2691,7 +2695,7 @@ struct QtLuaEngine::Receiver : public QObject
   Q_OBJECT
 public:
   virtual ~Receiver();
-  Receiver(QtLuaEngine *q) : 
+  Receiver(QtLuaEngine *q) :
     QObject(q), d(q->d), sender(0), direct(false), args(0) {}
 public slots:
   void universal();
@@ -2718,7 +2722,7 @@ struct QtLuaEngine::Receiver2
 };
 
 
-int 
+int
 QtLuaEngine::Receiver2::qt_metacall(QMetaObject::Call c, int id, void **a)
 {
   void **old = args;
@@ -2789,7 +2793,7 @@ QtLuaEngine::Receiver::connect(QObject *obj, const char *sig, bool d)
 #endif
   if (okay)
     {
-      QObject::connect(obj, SIGNAL(destroyed(QObject*)), 
+      QObject::connect(obj, SIGNAL(destroyed(QObject*)),
                        this, SLOT(deleteLater()) );
       direct = d;
       return true;
@@ -2810,7 +2814,7 @@ QtLuaEngine::Receiver::universal()
   bool queueSignal = false;
   QThread *mythread = QThread::currentThread();
   QMutexLocker locker(&d->mutex);
-  if (d && direct && !d->hopEvent && 
+  if (d && direct && !d->hopEvent &&
       d->lockCount>0 && d->lockThread == mythread)
     {
       // find closure
@@ -2883,7 +2887,7 @@ QtLuaEngine::Private::disconnectAllSignals()
 }
 
 
-bool 
+bool
 QtLuaEngine::Private::processQueuedSignals(QMutexLocker &locker)
 {
   bool processed = false;
@@ -2944,11 +2948,11 @@ QtLuaEngine::Private::processQueuedSignals(QMutexLocker &locker)
 /*! This function processes all pending events in the running thread.
   It also processed queued signals connected to a lua function or closure.
   This implies that these lua functions or closure are called from
-  within the luaQ_doevents function. 
-  The optional flag \a wait indicates if one should wait 
+  within the luaQ_doevents function.
+  The optional flag \a wait indicates if one should wait
   until receiving at least one event. */
 
-void 
+void
 luaQ_doevents(lua_State *L, bool wait)
 {
   QtLuaEngine::Private *d = luaQ_private(L);
@@ -2984,7 +2988,7 @@ luaQ_doevents(lua_State *L, bool wait)
 }
 
 
-void 
+void
 luaQ_doevents(lua_State *L)
 {
   return luaQ_doevents(L, false);
@@ -3037,12 +3041,12 @@ luaQ_p_create_receiver(lua_State *L)
 }
 
 
-/*! Connects signal \a sig of Qt object \a obj to the 
+/*! Connects signal \a sig of Qt object \a obj to the
   function located at stack position \a findex.
   Returns false if the signal does not exist. */
 
 bool
-luaQ_connect(lua_State *L, QObject *obj, 
+luaQ_connect(lua_State *L, QObject *obj,
              const char *sig, int findex, bool direct)
 {
   bool success = false;
@@ -3053,7 +3057,7 @@ luaQ_connect(lua_State *L, QObject *obj,
   lua_pushcfunction(L, luaQ_p_create_receiver);
   luaQ_call(L, 0, 1, d->q);
   QVariant *vp = luaQ_toqvariantp(L, -1);
-  void *v = (vp) ? qVariantValue<void*>(luaQ_toqvariant(L, -1)) : 0;
+  void *v = (vp) ? vp->value<void *>() : 0;
   QtLuaEngine::Receiver *r = static_cast<QtLuaEngine::Receiver*>(v);
   lua_pop(L, 1);
   if (! r)
@@ -3079,7 +3083,7 @@ luaQ_connect(lua_State *L, QObject *obj,
 
 /*! Disconnects the connection matching the provided arguments.
   Arguments \a sig of \a findex can be zero to indicate
-  that any signature or any closure should match. 
+  that any signature or any closure should match.
   Returns a boolean indicating if any such signals were found. */
 
 bool
@@ -3098,7 +3102,7 @@ luaQ_disconnect(lua_State *L, QObject *obj, const char *sig, int findex)
   lua_rawget(L, LUA_REGISTRYINDEX);
   if (findex)
     lua_pushvalue(L, findex);
-  else 
+  else
     lua_pushnil(L);
   // ..stack: function sigtable ...
   // select receviers

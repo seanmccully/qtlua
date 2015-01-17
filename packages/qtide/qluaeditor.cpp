@@ -23,8 +23,8 @@
 #include <QMessageBox>
 #include <QPainter>
 #include <QPointer>
-#include <QPrintDialog>
-#include <QPrinter>
+#include <QtPrintSupport/QPrinter>
+#include <QtPrintSupport/QPrintDialog>
 #include <QRegExp>
 #include <QSettings>
 #include <QStatusBar>
@@ -101,9 +101,9 @@ QLuaEditor::Private::~Private()
 }
 
 
-QLuaEditor::Private::Private(QLuaEditor *q) 
-  : QObject(q), 
-    q(q), 
+QLuaEditor::Private::Private(QLuaEditor *q)
+  : QObject(q),
+    q(q),
     e(new QLuaTextEdit),
     printer(0),
     sbPosition(0),
@@ -113,7 +113,7 @@ QLuaEditor::Private::Private(QLuaEditor *q)
 }
 
 
-void 
+void
 QLuaEditor::Private::computeAutoMode()
 {
   QString suffix = QFileInfo(fileName).suffix();
@@ -130,7 +130,7 @@ QLuaEditor::Private::computeAutoMode()
 }
 
 
-void 
+void
 QLuaEditor::Private::setFileName(QString fname)
 {
   fileName = fname;
@@ -142,7 +142,7 @@ QLuaEditor::Private::setFileName(QString fname)
 }
 
 
-void 
+void
 QLuaEditor::Private::luaEnableActions(bool enabled)
 {
   QLuaTextEditMode *mode = e->editorMode();
@@ -156,7 +156,7 @@ QLuaEditor::Private::luaEnableActions(bool enabled)
 }
 
 
-void 
+void
 QLuaEditor::Private::luaAcceptingCommands(bool accepting)
 {
   luaEnableActions(accepting);
@@ -200,12 +200,12 @@ QLuaEditor::Private::luaLoad(bool restart)
 }
 
 
-void 
+void
 QLuaEditor::Private::updateMode(QLuaTextEditModeFactory *f)
 {
   if  (modeGroup)
     foreach(QAction *action, modeGroup->actions())
-      action->setChecked(qVariantValue<void*>(action->data()) == (void*)f);
+      action->setChecked((action->data()).value<void*>() == (void*)f);
 }
 
 
@@ -214,7 +214,7 @@ QLuaEditor::Private::doMode(QAction *action)
 {
   if (action)
     {
-      void *data = qVariantValue<void*>(action->data());
+      void *data = (action->data()).value<void*>();
       QLuaTextEditModeFactory *f = (data) ? (QLuaTextEditModeFactory*)data : 0;
       q->doMode(f);
     }
@@ -244,9 +244,9 @@ QLuaEditor::QLuaEditor(QWidget *parent)
   d->e->setUndoRedoEnabled(true);
   stdAction("ActionEditUndo")->setEnabled(false);
   stdAction("ActionEditRedo")->setEnabled(false);
-  connect(d->e, SIGNAL(undoAvailable(bool)), 
+  connect(d->e, SIGNAL(undoAvailable(bool)),
           stdAction("ActionEditUndo"), SLOT(setEnabled(bool)) );
-  connect(d->e, SIGNAL(redoAvailable(bool)), 
+  connect(d->e, SIGNAL(redoAvailable(bool)),
           stdAction("ActionEditRedo"), SLOT(setEnabled(bool)) );
   connect(d->e, SIGNAL(settingsChanged()),
           this, SLOT(updateActionsLater()) );
@@ -270,7 +270,7 @@ QLuaEditor::loadSettings()
 {
   QSettings s;
   QLuaTextEdit *e = d->e;
-  
+
   // Font
   QFont font = QApplication::font();
   if (s.contains("editor/font"))
@@ -289,7 +289,7 @@ QLuaEditor::loadSettings()
         font.setFamily(QString::null);
     }
   e->setFont(font);
-  
+
   // Editor size
   QSize size;
   if (s.contains("editor/size"))
@@ -307,8 +307,8 @@ QLuaEditor::loadSettings()
   if (tabSize<2 || tabSize>16)
     tabSize = 8;
   e->setTabSize(tabSize);
-  
-  // Other 
+
+  // Other
   e->setTabExpand(s.value("editor/tabExpand", true).toBool());
   e->setAutoComplete(s.value("editor/autoComplete", true).toBool());
   e->setAutoIndent(s.value("editor/autoIndent", true).toBool());
@@ -338,14 +338,14 @@ QLuaEditor::saveSettings()
 }
 
 
-QString 
+QString
 QLuaEditor::fileName() const
 {
   return d->fileName;
 }
 
 
-void 
+void
 QLuaEditor::setFileName(QString fileName)
 {
   if (fileName != d->fileName)
@@ -360,7 +360,7 @@ QLuaEditor::widget()
 }
 
 
-bool 
+bool
 QLuaEditor::readFile(QFile &file)
 {
   if (d->e->readFile(file))
@@ -381,7 +381,7 @@ QLuaEditor::readFile(QFile &file)
 }
 
 
-bool 
+bool
 QLuaEditor::readFile(QString fname)
 {
   QFile file(fname);
@@ -389,7 +389,7 @@ QLuaEditor::readFile(QString fname)
 }
 
 
-bool 
+bool
 QLuaEditor::writeFile(QFile &file, bool rename)
 {
   if (d->e->writeFile(file))
@@ -410,7 +410,7 @@ QLuaEditor::writeFile(QFile &file, bool rename)
 }
 
 
-bool 
+bool
 QLuaEditor::writeFile(QString fname, bool rename)
 {
   QFile file(fname);
@@ -438,7 +438,7 @@ QLuaEditor::createAction(QByteArray name)
       menu->addAction(stdAction("ActionFileClose"));
       menu->addAction(stdAction("ActionFileQuit"));
       return menu->menuAction();
-    } 
+    }
   else if (name == "MenuEdit")
     {
       QMenu *menu = newMenu(tr("&Edit", "edit|"));
@@ -454,7 +454,7 @@ QLuaEditor::createAction(QByteArray name)
       menu->addAction(stdAction("ActionEditFind"));
       menu->addAction(stdAction("ActionEditReplace"));
       return menu->menuAction();
-    } 
+    }
   else if (name == "MenuTools")
     {
       QMenu  *menu = newMenu(tr("&Tools", "tools|"));
@@ -467,7 +467,7 @@ QLuaEditor::createAction(QByteArray name)
       menu->addAction(stdAction("ActionModeAutoHighlight"));
       menu->addAction(stdAction("ActionModeAutoMatch"));
       return menu->menuAction();
-    } 
+    }
   else if (name == "MenuLua")
     {
       QMenu *menu = newMenu(tr("&Lua", "lua|"));
@@ -475,7 +475,7 @@ QLuaEditor::createAction(QByteArray name)
       menu->addAction(stdAction("ActionLuaLoad"));
       menu->addAction(stdAction("ActionLuaRestart"));
       return menu->menuAction();
-    } 
+    }
   else if (name == "MenuMode")
     {
       QMenu *menu = newMenu(tr("Mode","tools|mode"));
@@ -483,7 +483,7 @@ QLuaEditor::createAction(QByteArray name)
       d->modeGroup->setExclusive(true);
       connect(d->modeGroup, SIGNAL(triggered(QAction*)),
               d, SLOT(doMode(QAction*)));
-      foreach(QLuaTextEditModeFactory *mode, 
+      foreach(QLuaTextEditModeFactory *mode,
               QLuaTextEditModeFactory::factories())
         {
           QAction *action = menu->addAction(mode->name());
@@ -701,7 +701,7 @@ QLuaEditor::createStatusBar()
 }
 
 
-bool 
+bool
 QLuaEditor::openFile(QString fname, bool inother)
 {
   saveSettings();
@@ -718,12 +718,12 @@ QLuaEditor::openFile(QString fname, bool inother)
   if (w)
     QLuaIde::instance()->editor(fname);
   else if (canClose())
-    readFile(fname); 
+    readFile(fname);
   return true;
 }
 
 
-bool 
+bool
 QLuaEditor::newDocument()
 {
   saveSettings();
@@ -735,7 +735,7 @@ QLuaEditor::newDocument()
 }
 
 
-void 
+void
 QLuaEditor::doSave()
 {
   if (d->fileName.isEmpty())
@@ -745,7 +745,7 @@ QLuaEditor::doSave()
 }
 
 
-void 
+void
 QLuaEditor::doSaveAs()
 {
   QString msg = tr("Save File");
@@ -761,7 +761,7 @@ QLuaEditor::doSaveAs()
 }
 
 
-void 
+void
 QLuaEditor::doPrint()
 {
   QPrinter *printer = loadPageSetup();
@@ -828,7 +828,7 @@ QLuaEditor::doPaste()
 }
 
 
-void 
+void
 QLuaEditor::doGoto()
 {
   QDialog *dialog = d->gotoDialog;
@@ -839,7 +839,7 @@ QLuaEditor::doGoto()
 }
 
 
-void 
+void
 QLuaEditor::doFind()
 {
   QDialog *dialog = d->findDialog;
@@ -853,7 +853,7 @@ QLuaEditor::doFind()
 }
 
 
-void 
+void
 QLuaEditor::doReplace()
 {
   QDialog *dialog = d->replaceDialog;
@@ -867,7 +867,7 @@ QLuaEditor::doReplace()
 }
 
 
-void 
+void
 QLuaEditor::doMode(QLuaTextEditModeFactory *factory)
 {
   d->e->setEditorMode(factory);
@@ -875,7 +875,7 @@ QLuaEditor::doMode(QLuaTextEditModeFactory *factory)
 }
 
 
-void 
+void
 QLuaEditor::doLineNumbers(bool b)
 {
   d->e->setShowLineNumbers(b);
@@ -883,7 +883,7 @@ QLuaEditor::doLineNumbers(bool b)
 }
 
 
-void 
+void
 QLuaEditor::doLineWrap(bool b)
 {
   if (b)
@@ -894,7 +894,7 @@ QLuaEditor::doLineWrap(bool b)
 }
 
 
-void 
+void
 QLuaEditor::doHighlight(bool b)
 {
   d->e->setAutoHighlight(b);
@@ -902,7 +902,7 @@ QLuaEditor::doHighlight(bool b)
 }
 
 
-void 
+void
 QLuaEditor::doCompletion(bool b)
 {
   d->e->setAutoComplete(b);
@@ -911,7 +911,7 @@ QLuaEditor::doCompletion(bool b)
 
 
 void
-QLuaEditor::doAutoIndent(bool b) 
+QLuaEditor::doAutoIndent(bool b)
 {
   d->e->setAutoIndent(b);
   updateActionsLater();
@@ -919,14 +919,14 @@ QLuaEditor::doAutoIndent(bool b)
 
 
 void
-QLuaEditor::doAutoMatch(bool b) 
+QLuaEditor::doAutoMatch(bool b)
 {
   d->e->setAutoMatch(b);
   updateActionsLater();
 }
 
 
-void 
+void
 QLuaEditor::doBalance()
 {
   QLuaTextEditMode *mode = d->e->editorMode();
@@ -937,7 +937,7 @@ QLuaEditor::doBalance()
 }
 
 
-void 
+void
 QLuaEditor::doLoad()
 {
   QLuaTextEditMode *mode = d->e->editorMode();
@@ -952,7 +952,7 @@ QLuaEditor::doLoad()
 }
 
 
-void 
+void
 QLuaEditor::doRestart()
 {
   QLuaTextEditMode *mode = d->e->editorMode();
@@ -967,7 +967,7 @@ QLuaEditor::doRestart()
 }
 
 
-void 
+void
 QLuaEditor::doEval()
 {
   QString s;
@@ -1022,7 +1022,7 @@ QLuaEditor::updateStatusBar()
 }
 
 
-void 
+void
 QLuaEditor::updateWindowTitle()
 {
   QString fName;
@@ -1042,7 +1042,7 @@ QLuaEditor::updateWindowTitle()
 }
 
 
-void 
+void
 QLuaEditor::updateActions()
 {
   QLuaMainWindow::updateActions();
@@ -1103,7 +1103,7 @@ QLuaEditor::updateActions()
       bool balance = (mode && mode->supportsBalance());
       stdAction("ActionModeBalance")->setEnabled(balance);
     }
-  
+
   // lua support
   bool luaVisible = mode && mode->supportsLua();
   if (hasAction("ActionLuaEval"))
@@ -1119,7 +1119,7 @@ QLuaEditor::updateActions()
 }
 
 
-bool 
+bool
 QLuaEditor::canClose()
 {
   QTextDocument *doc = d->e->document();
@@ -1141,7 +1141,7 @@ QLuaEditor::canClose()
       setWindowModified(false);
       doc->setModified(false);
       return true;
-    case QMessageBox::Save:      
+    case QMessageBox::Save:
       doSave();
     default:
       break;

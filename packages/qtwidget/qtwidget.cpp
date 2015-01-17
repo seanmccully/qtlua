@@ -34,8 +34,8 @@
 // ========================================
 // HELPERS
 
-  
-static QMetaEnum 
+
+static QMetaEnum
 f_enumerator(const char *s, const QMetaObject *mo)
 {
   int index = mo->indexOfEnumerator(s);
@@ -46,7 +46,7 @@ f_enumerator(const char *s, const QMetaObject *mo)
 
 
 #ifndef Q_MOC_RUN
-static QMetaEnum 
+static QMetaEnum
 f_enumerator(const char *s)
 {
   struct QFakeObject : public QObject {
@@ -58,9 +58,9 @@ f_enumerator(const char *s)
 
 static void
 f_checktype(lua_State *L, int index, const char *name, int type)
-{ 
+{
   if (index)
-    lua_getfield(L,index,name); 
+    lua_getfield(L,index,name);
   int t = lua_type(L, -1);
   if (t != type)
     luaL_error(L, "%s expected in field '%s', got %s",
@@ -69,8 +69,8 @@ f_checktype(lua_State *L, int index, const char *name, int type)
 
 static bool
 f_opttype(lua_State *L, int index, const char *name, int type)
-{ 
-  lua_getfield(L,index,name); 
+{
+  lua_getfield(L,index,name);
   if (lua_isnoneornil(L, -1))
     return false;
   f_checktype(L, 0, name, type);
@@ -93,15 +93,15 @@ f_pushflag(lua_State *L, int value, const QMetaEnum &me)
 
 static void
 f_checkflag(lua_State *L, int index, const char *name, const QMetaEnum &me)
-{ 
+{
   if (index)
-    lua_getfield(L,index,name); 
+    lua_getfield(L,index,name);
   if (me.isValid() && lua_isstring(L, -1))
     {
       const char *s = lua_tostring(L, -1);
       int v = (me.isFlag()) ? me.keysToValue(s) : me.keyToValue(s);
       if (v == -1)
-        luaL_error(L, "value '%s' from field '%s' illegal for type %s::%s", 
+        luaL_error(L, "value '%s' from field '%s' illegal for type %s::%s",
                    s, name, me.scope(), me.name() );
       lua_pushinteger(L, v);
       lua_replace(L, -2);
@@ -117,8 +117,8 @@ f_checkflag(lua_State *L, int index, const char *name, const QMetaEnum &me)
 
 static bool
 f_optflag(lua_State *L, int index, const char *name, const QMetaEnum &me)
-{ 
-  lua_getfield(L,index,name); 
+{
+  lua_getfield(L,index,name);
   if (lua_isnoneornil(L, -1))
     return false;
   f_checkflag(L, 0, name, me);
@@ -127,9 +127,9 @@ f_optflag(lua_State *L, int index, const char *name, const QMetaEnum &me)
 
 static void
 f_checkvar(lua_State *L, int index, const char *name, int tid)
-{ 
+{
   if (index)
-    lua_getfield(L,index,name); 
+    lua_getfield(L,index,name);
   QVariant v = luaQ_toqvariant(L, -1, tid);
   if (v.userType() != tid)
     luaL_error(L, "qt.%s expected in field '%s'", QMetaType::typeName(tid));
@@ -137,8 +137,8 @@ f_checkvar(lua_State *L, int index, const char *name, int tid)
 
 static bool
 f_optvar(lua_State *L, int index, const char *name, int tid)
-{ 
-  lua_getfield(L,index,name); 
+{
+  lua_getfield(L,index,name);
   if (lua_isnoneornil(L, -1))
     return false;
   f_checkvar(L, 0, name, tid);
@@ -171,9 +171,11 @@ luaQE_checkqvariant(lua_State *L, int index, T* = 0)
         }
       lua_pop(L, 1);
     }
-  if (v.userType() != type)
-    luaL_typerror(L, index, QMetaType::typeName(type));
-  return qVariantValue<T>(v);
+  if (v.userType() != type) {
+    lua_pushstring(L, QMetaType::typeName(type));
+    lua_error(L);
+  }
+  return v.value<T>();
 }
 
 
@@ -190,11 +192,11 @@ qtluapainter_new(lua_State *L)
   QVariant v = luaQ_toqvariant(L, 1);
   if (v.userType() == QMetaType::QPixmap)
     {
-      p = new QtLuaPainter(qVariantValue<QPixmap>(v));
+      p = new QtLuaPainter(v.value<QPixmap>());
     }
   else if (v.userType() == QMetaType::QImage)
     {
-      p = new QtLuaPainter(qVariantValue<QImage>(v));
+      p = new QtLuaPainter(v.value<QImage>());
     }
   else if (qobject_cast<QWidget*>(o))
     {
@@ -225,12 +227,12 @@ qtluapainter_new(lua_State *L)
       void *udata = luaL_checkudata(L, 1, LUA_FILEHANDLE);
       const char *format = luaL_optstring(L, 2, 0);
       if (! f.open(*(FILE**)udata, QIODevice::ReadOnly))
-        luaL_error(L,"cannot use stream for reading (%s)", 
+        luaL_error(L,"cannot use stream for reading (%s)",
                    f.errorString().toLocal8Bit().constData() );
       QImage img;
       if(! img.load(&f, format))
         luaL_error(L,"cannot load image from file");
-      
+
     }
   else
     {
@@ -283,7 +285,7 @@ qtluapainter_V(currentbackground, QBrush)
 qtluapainter_V(currentstylesheet, QString)
 
 
-static int 
+static int
 qtluapainter_currentmode(lua_State *L)
 {
   QtLuaPainter *p = luaQ_checkqobject<QtLuaPainter>(L, 1);
@@ -291,11 +293,11 @@ qtluapainter_currentmode(lua_State *L)
   QMetaEnum e = f_enumerator("CompositionMode", mo);
   QtLuaPainter::CompositionMode s = p->currentmode();
   lua_pushstring(L, e.valueToKey((int)(s)));
-  return 1; 
+  return 1;
 }
 
-               
-static int 
+
+static int
 qtluapainter_currenthints(lua_State *L)
 {
   QtLuaPainter *p = luaQ_checkqobject<QtLuaPainter>(L, 1);
@@ -303,11 +305,11 @@ qtluapainter_currenthints(lua_State *L)
   QMetaEnum e = f_enumerator("RenderHints", mo);
   QtLuaPainter::RenderHints s = p->currenthints();
   lua_pushstring(L, e.valueToKeys((int)(s)).constData());
-  return 1; 
+  return 1;
 }
 
 
-static int 
+static int
 qtluapainter_currentangleunit(lua_State *L)
 {
   QtLuaPainter *p = luaQ_checkqobject<QtLuaPainter>(L, 1);
@@ -315,7 +317,7 @@ qtluapainter_currentangleunit(lua_State *L)
   QMetaEnum e = f_enumerator("AngleUnit", mo);
   QtLuaPainter::AngleUnit s = p->currentangleunit();
   lua_pushstring(L, e.valueToKeys((int)(s)).constData());
-  return 1; 
+  return 1;
 }
 
 
@@ -339,7 +341,7 @@ qtluapainter_vV(setfont, QFont)
 qtluapainter_vV(setbackground, QBrush)
 
 
-static int 
+static int
 qtluapainter_setmode(lua_State *L)
 {
   QtLuaPainter *p = luaQ_checkqobject<QtLuaPainter>(L, 1);
@@ -353,7 +355,7 @@ qtluapainter_setmode(lua_State *L)
 }
 
 
-static int 
+static int
 qtluapainter_sethints(lua_State *L)
 {
   QtLuaPainter *p = luaQ_checkqobject<QtLuaPainter>(L, 1);
@@ -366,7 +368,7 @@ qtluapainter_sethints(lua_State *L)
   return 0;
 }
 
-static int 
+static int
 qtluapainter_setangleunit(lua_State *L)
 {
   QtLuaPainter *p = luaQ_checkqobject<QtLuaPainter>(L, 1);
@@ -466,8 +468,8 @@ static int qtluapainter_show(lua_State *L)
   else
     {
       qreal x = luaL_checknumber(L, 3);
-      qreal y = luaL_checknumber(L, 4); 
-      qreal w = luaL_checknumber(L, 5); 
+      qreal y = luaL_checknumber(L, 4);
+      qreal w = luaL_checknumber(L, 5);
       qreal h = luaL_checknumber(L, 6);
       const char *sf = luaL_optstring(L, 7, "AlignLeft");
       const QMetaObject *mo = &QtLuaPainter::staticMetaObject;
@@ -503,8 +505,8 @@ static int qtluapainter_stringrect(lua_State *L)
   else
     {
       qreal x = luaL_checknumber(L, 3);
-      qreal y = luaL_checknumber(L, 4); 
-      qreal w = luaL_checknumber(L, 5); 
+      qreal y = luaL_checknumber(L, 4);
+      qreal w = luaL_checknumber(L, 5);
       qreal h = luaL_checknumber(L, 6);
       const char *sf = luaL_optstring(L, 7, "");
       const QMetaObject *mo = &QtLuaPainter::staticMetaObject;
@@ -558,18 +560,20 @@ static int qtluapainter_image(lua_State *L)
     lua_pop(L, 1);
   }
   if (v.userType() == QMetaType::QImage) {
-    QImage q = qVariantValue<QImage>(v);
-    sw = q.width(); 
-    sh = q.height(); 
+    QImage q = v.value<QImage>();
+    sw = q.width();
+    sh = q.height();
   } else if (v.userType() == QMetaType::QPixmap) {
-    QPixmap q = qVariantValue<QPixmap>(v);
-    sw = q.width(); 
+    QPixmap q = v.value<QPixmap>();
+    sw = q.width();
     sh = q.height();
   } else if (o) {
     sw = o->width();
     sh = o->height();
-  } else
-    luaL_typerror(L, k, "QPixmap or QImage");
+  } else {
+    lua_pushstring(L, "QPixmap or QImage");
+    lua_error(L);
+  }
   k += 1;
   if (lua_isnumber(L, k)) {
     sx = luaL_checknumber(L, k++);
@@ -586,11 +590,11 @@ static int qtluapainter_image(lua_State *L)
   QRectF dst(x,y,w,h);
   QRectF src(sx,sy,sw,sh);
   if (v.userType() == QMetaType::QPixmap)
-    p->image(dst, qVariantValue<QPixmap>(v), src);
+    p->image(dst, v.value<QPixmap>(), src);
   else if (v.userType() == QMetaType::QImage)
-    p->image(dst, qVariantValue<QImage>(v), src);
+    p->image(dst, v.value<QImage>(), src);
   else if (o)
-    p->image(dst, o, src);    
+    p->image(dst, o, src);
   return 0;
 }
 
@@ -669,7 +673,7 @@ struct luaL_Reg qtluapainter_guilib[] = {
 };
 
 
-static int qtluapainter_hook(lua_State *L) 
+static int qtluapainter_hook(lua_State *L)
 {
   lua_getfield(L, -1, "__metatable");
   luaL_register(L, 0, qtluapainter_lib);
@@ -703,7 +707,7 @@ static struct luaL_Reg qtlualistener_lib[] = {
 };
 
 
-static int qtlualistener_hook(lua_State *L) 
+static int qtlualistener_hook(lua_State *L)
 {
   lua_getfield(L, -1, "__metatable");
   luaQ_register(L, qtlualistener_lib, QCoreApplication::instance());
@@ -734,7 +738,7 @@ static luaL_Reg qtluaprinter_lib[] = {
 };
 
 
-static int qtluaprinter_hook(lua_State *L) 
+static int qtluaprinter_hook(lua_State *L)
 {
   lua_getfield(L, -1, "__metatable");
   luaQ_register(L, qtluaprinter_lib, QCoreApplication::instance());
@@ -749,11 +753,11 @@ static int qtluaprinter_hook(lua_State *L)
 
 LUA_EXTERNC QTWIDGET_API int
 luaopen_libqtwidget(lua_State *L)
-{ 
+{
   // load module 'qt'
   if (luaL_dostring(L, "require 'qt'"))
     lua_error(L);
-  if (QApplication::type() == QApplication::Tty)
+  if (qobject_cast<QApplication *>(QCoreApplication::instance()))
     printf("qtwidget window functions will not be usable (running with -nographics)\n");
   //luaL_error(L, "Graphics have been disabled (running with -nographics)");
 
@@ -767,16 +771,16 @@ luaopen_libqtwidget(lua_State *L)
      lua_pushcfunction(L, t ## _hook);\
      luaQ_pushmeta(L, &T::staticMetaObject);\
      lua_call(L, 1, 0)
-  
+
   // call hook for qvariants
 #define HOOK_QVARIANT(T, t) \
      lua_pushcfunction(L, t ## _hook);\
      luaQ_pushmeta(L, QMetaType::T);\
      lua_call(L, 1, 0)
-  
-  HOOK_QOBJECT(QtLuaPrinter, qtluaprinter);  
-  HOOK_QOBJECT(QtLuaPainter, qtluapainter);  
-  HOOK_QOBJECT(QtLuaListener, qtlualistener);  
+
+  HOOK_QOBJECT(QtLuaPrinter, qtluaprinter);
+  HOOK_QOBJECT(QtLuaPainter, qtluapainter);
+  HOOK_QOBJECT(QtLuaListener, qtlualistener);
   return 1;
 }
 

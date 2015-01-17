@@ -94,7 +94,7 @@ set_sigint_handler(signal_handler_t handler)
 
 #elif HAVE_SIGACTION
 
-static void 
+static void
 hold_signals(sigset_t *oset)
 {
   sigset_t sset;
@@ -104,25 +104,25 @@ hold_signals(sigset_t *oset)
 # endif
 # ifdef SIGTSTP
   sigaddset(&sset, SIGTSTP);
-# endif  
+# endif
 # ifdef SIGSTOP
   sigaddset(&sset, SIGSTOP);
-# endif  
+# endif
 # ifdef SIGQUIT
   sigaddset(&sset, SIGQUIT);
-# endif  
+# endif
 # ifdef SIGHUP
   sigaddset(&sset, SIGHUP);
-# endif  
+# endif
 # ifdef SIGTERM
   sigaddset(&sset, SIGTERM);
-# endif  
+# endif
 # ifdef SIGCONT
   sigaddset(&sset, SIGCONT);
-# endif  
+# endif
 # ifdef SIGWINCH
   sigaddset(&sset, SIGWINCH);
-# endif  
+# endif
 # if HAVE_PTHREAD_SIGMASK
   pthread_sigmask(SIG_BLOCK, &sset, oset);
 # elif HAVE_SIGPROCMASK
@@ -130,7 +130,7 @@ hold_signals(sigset_t *oset)
 # endif
 }
 
-static void 
+static void
 release_signals(sigset_t *oset)
 {
 # if HAVE_PTHREAD_SIGMASK
@@ -140,7 +140,7 @@ release_signals(sigset_t *oset)
 # endif
 }
 
-template<typename V, typename P> 
+template<typename V, typename P>
 static void assign_any_pointer(V* &var, P* ptr)
 {
   var = static_cast<V*>(ptr);
@@ -233,10 +233,10 @@ wait_for_input(int nfds, int *fds, bool wait=true)
 // QLuaConsole::Private
 
 
-enum Command { 
-  NoCmd, 
-  KillCmd, 
-  ReadlineCmd, 
+enum Command {
+  NoCmd,
+  KillCmd,
+  ReadlineCmd,
   AbortCmd,
   RedisplayCmd,
   BreakCmd,
@@ -250,7 +250,7 @@ struct QLuaConsole::Private : public QThread
   Q_OBJECT
 
 public:
-  
+
   QLuaConsole *q;
   QMutex mutex;
   QWaitCondition pulse;
@@ -274,7 +274,7 @@ public:
   QPointer<QtLuaEngine> lua;
   bool breakStopsLua;
   CtrlCHandler ctrlCHandler;
-  
+
   Private(QLuaConsole *parent);
   ~Private();
   void run();
@@ -311,7 +311,7 @@ rtty_getchar(FILE*)
   int c;
   if (console)
     c = console->getchar();
-  else 
+  else
     c = getchar();
   return c;
 }
@@ -320,16 +320,16 @@ rtty_getchar(FILE*)
 #if HAVE_READLINE
 
 static const char *
-rtty_keywords[] = 
+rtty_keywords[] =
   {
-    "and", "break", "do", "else", "elseif", 
+    "and", "break", "do", "else", "elseif",
     "end", "false", "for", "function",
-    "if", "in", "local", "nil", "not", 
+    "if", "in", "local", "nil", "not",
     "or", "repeat", "return", "then",
     "true", "until", "while", 0
   };
 
-static int 
+static int
 rtty_lex(const char *s, int end, int &q)
 {
   int state = -1;
@@ -342,9 +342,9 @@ rtty_lex(const char *s, int end, int &q)
         default:
         case -1: // misc
           if (isalpha(s[p]) || s[p]=='_') {
-            q = p; state = -2; 
+            q = p; state = -2;
           } else if (s[p]=='\'') {
-            q = s[p]; n = 0; state = -3; 
+            q = s[p]; n = 0; state = -3;
           } else if (s[p]=='\"') {
             q = s[p]; n = 0; state = -3;
           } else if (s[p]=='[') {
@@ -357,7 +357,7 @@ rtty_lex(const char *s, int end, int &q)
             else
               state = -1;
           } else if (s[p]=='-' && s[p+1]=='-') {
-            n = 0; state = -4; 
+            n = 0; state = -4;
             if (s[p+2]=='[') {
               const char *t = s + p + 3;
               while (*t == '=')
@@ -446,7 +446,7 @@ rtty_complete(const char *text, int start, int end)
 {
   int state = rtty_lex(rl_line_buffer, end, start);
   // default filename completion in string
-  if (state == -3) 
+  if (state == -3)
     return 0;
   // no default completion
   rl_attempted_completion_over = 1;
@@ -476,7 +476,7 @@ rtty_complete(const char *text, int start, int end)
       QtLuaLocker lua(console->lua, 250);
       struct lua_State *L = lua;
       if (lua) {
-        lua_getfield(L, LUA_GLOBALSINDEX, "help");
+        lua_getglobal(L, "help");
         if (lua_gettop(L)) {
           printf("\n");
           lua_pushstring(L, keyword);
@@ -489,9 +489,9 @@ rtty_complete(const char *text, int start, int end)
     return result;
   }
   // no completion unless in identifier
-  if (state != -2 || start >= end) 
+  if (state != -2 || start >= end)
     return 0;
-  // complete 
+  // complete
   const char *stem = rl_line_buffer + start;
   int stemlen = end - start;
   QList<QByteArray> completions;
@@ -578,7 +578,7 @@ static QByteArray
 rtty_readline(const char *prompt)
 {
   // prep
-  if (! rtty_inited) 
+  if (! rtty_inited)
     rtty_prep();
   // flush
   FILE *ferr = ((console) ? console->trueStderr : stderr);
@@ -658,25 +658,26 @@ rtty_readline(const char *prompt)
 // Various callbacks
 
 
-static void 
-message_handler(QtMsgType type, const char *msg)
+void
+message_handler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
   FILE *ferr = stderr;
+  QByteArray localMsg = msg.toLocal8Bit();
   if (console)
     ferr = console->trueStderr;
-  switch (type) 
+  switch (type)
     {
     case QtDebugMsg:
-      fprintf(ferr, "# Debug: %s\n", msg);
+      fprintf(ferr, "# Debug: %s\n", localMsg.constData());
       break;
     case QtWarningMsg:
-      fprintf(ferr, "# Warning: %s\n", msg);
+      fprintf(ferr, "# Warning: %s\n", localMsg.constData());
       break;
     case QtCriticalMsg:
-      fprintf(ferr, "# Critical: %s\n", msg);
+      fprintf(ferr, "# Critical: %s\n", localMsg.constData());
       break;
     case QtFatalMsg:
-      fprintf(ferr, "# Fatal: %s\n", msg);
+      fprintf(ferr, "# Fatal: %s\n", localMsg.constData());
       abort();
     }
 }
@@ -696,7 +697,7 @@ handle_sigint(int)
 
 
 QLuaConsole::Private::Private(QLuaConsole *parent)
-  : QThread(parent), 
+  : QThread(parent),
     q(parent),
     throttleCount(0),
     throttleActive(false),
@@ -714,15 +715,15 @@ QLuaConsole::Private::Private(QLuaConsole *parent)
   console = this;
 
   // hold all signals from the main thread.
-  // signal processing happens in 
+  // signal processing happens in
   // the console thread (see run)
   hold_signals(&savedSigSet);    // <-- save the sigset before
-  
+
   // create pipes
   if (pipe(stdoutPipe) < 0)
-    qFatal("qlua console: unable to create output pipe");    
-  if (pipe(commandPipe) < 0) 
-    qFatal("qlua console: unable to create command pipe");    
+    qFatal("qlua console: unable to create output pipe");
+  if (pipe(commandPipe) < 0)
+    qFatal("qlua console: unable to create command pipe");
 
   // duplicate stdout/stderr
   int stdoutFd = dup(fileno(stdout));
@@ -797,7 +798,7 @@ QLuaConsole::Private::sethandler()
   if (ctrlCHandler == ctrlCDefault)
     set_sigint_handler(SIG_DFL);
   else if (ctrlCHandler == ctrlCIgnore)
-    set_sigint_handler(SIG_IGN);    
+    set_sigint_handler(SIG_IGN);
   else if (ctrlCHandler == ctrlCBreak)
     set_sigint_handler(handle_sigint);
   else
@@ -805,7 +806,7 @@ QLuaConsole::Private::sethandler()
 }
 
 
-void 
+void
 QLuaConsole::Private::redirect(bool flag)
 {
   QMutexLocker lock(&mutex);
@@ -867,7 +868,7 @@ QLuaConsole::Private::run()
                 drain.wakeAll();
                 break;
               case BreakCmd:
-                if (lua && breakStopsLua) 
+                if (lua && breakStopsLua)
                   lua->stop(true);
                 emit q->ttyBreak();
                 break;
@@ -928,7 +929,7 @@ QLuaConsole::Private::getchar()
                 drain.wakeAll();
                 break;
               case BreakCmd:
-                if (lua && breakStopsLua) 
+                if (lua && breakStopsLua)
                   lua->stop(true);
                 emit q->ttyBreak();
                 break;
@@ -948,7 +949,7 @@ QLuaConsole::Private::getchar()
   return EOF;
 }
 
-           
+
 void
 QLuaConsole::Private::copyout(bool throttle)
 {
@@ -971,7 +972,7 @@ QLuaConsole::Private::copyout(bool throttle)
 }
 
 
-void 
+void
 QLuaConsole::Private::slotConsoleOutput(QByteArray ba)
 {
   QByteArray bb;
@@ -991,7 +992,7 @@ QLuaConsole::Private::slotConsoleOutput(QByteArray ba)
 }
 
 
-void 
+void
 QLuaConsole::Private::slotCommandNoCmd()
 {
   QMutexLocker locker(&mutex);
@@ -1008,7 +1009,7 @@ QLuaConsole::Private::readline()
   QByteArray prompt = this->prompt;
   QByteArray ba;
   mutex.unlock();
-  ba = rtty_readline(prompt.constData()); 
+  ba = rtty_readline(prompt.constData());
   mutex.lock();
   switch (rtty_status)
     {
@@ -1036,9 +1037,9 @@ QLuaConsole::Private::readline()
 /*! \class QLuaConsole
   This object handles the console input and output.
   When \a captureOutput is sets, it captures everything
-  printed on the standard output and broadcast it 
+  printed on the standard output and broadcast it
   using signal \a consoleOutput.
-  Calling \a readLine causes this object to 
+  Calling \a readLine causes this object to
   asynchronously read one line of command on the terminal.
   The object will indicate that the line is available
   using signal \a ttyInput. */
@@ -1048,7 +1049,7 @@ QLuaConsole::Private::readline()
 QLuaConsole::QLuaConsole(QObject *parent)
   : QObject(parent), d(new Private(this))
 {
-  qInstallMsgHandler(message_handler);
+  qInstallMessageHandler(message_handler);
   d->start();
 }
 
@@ -1058,33 +1059,33 @@ QLuaConsole::QLuaConsole(QObject *parent)
   broadcast it by emiting signals \a consoleOutput.
  */
 
-bool 
+bool
 QLuaConsole::captureOutput() const
 {
   return d->captureOutput;
 }
 
-void 
+void
 QLuaConsole::setCaptureOutput(bool flag)
 {
   d->captureOutput = flag;
   d->redirect(flag);
   if (d->isRunning())
-    d->command(NoCmd); 
+    d->command(NoCmd);
 }
 
 
 /*! \property QLuaConsole::printCapturedOutput
-  Set this to echo all captured output strings on the 
+  Set this to echo all captured output strings on the
   true standard output. */
 
-bool 
+bool
 QLuaConsole::printCapturedOutput() const
 {
   return d->printCapturedOutput;
 }
 
-void 
+void
 QLuaConsole::setPrintCapturedOutput(bool flag)
 {
   d->printCapturedOutput = flag;
@@ -1098,13 +1099,13 @@ const CtrlCHandler QLuaConsole::ctrlCIgnore = (CtrlCHandler)(-2);
 const CtrlCHandler QLuaConsole::ctrlCBreak = (CtrlCHandler)(-3);
 
 /*! Sets the Ctrl-C handler for the process.
-  Special values \a QLuaConsole::ctrlCDefault 
+  Special values \a QLuaConsole::ctrlCDefault
   and \a QLuaConsole::ctrlCIgnore are equivalent
   to the usual signal handlers \a SIG_DFL and \a SIG_IGN.
   Special value \a QLuaConsole::ctrlCBreak runs
   a handler that emits signal \a ttyBreak(). */
 
-CtrlCHandler 
+CtrlCHandler
 QLuaConsole::setCtrlCHandler(CtrlCHandler handler)
 {
   CtrlCHandler old = d->ctrlCHandler;
@@ -1118,8 +1119,8 @@ QLuaConsole::setCtrlCHandler(CtrlCHandler handler)
 
 
 
-/*! Sets the lua interpreter that will be used by subsequent 
-  readline operations for completion and locking. 
+/*! Sets the lua interpreter that will be used by subsequent
+  readline operations for completion and locking.
   When flags \a breakStopsLua, pressing CTRL-C stops
   the engine using \a QtLuaEngine::stop().
   This is useful when running in single thread mode
@@ -1127,7 +1128,7 @@ QLuaConsole::setCtrlCHandler(CtrlCHandler handler)
   to receive the \a ttyBreak signal since it is busy
   running Lua. */
 
-void 
+void
 QLuaConsole::setQtLuaEngine(QtLuaEngine *lua, bool breakStopsLua)
 {
   d->lua = lua;
@@ -1140,7 +1141,7 @@ QLuaConsole::setQtLuaEngine(QtLuaEngine *lua, bool breakStopsLua)
   Cause the emission of signal \a ttyLineRead
   when the line has been read. */
 
-void 
+void
 QLuaConsole::readLine(QByteArray prompt)
 {
   QMutexLocker lock(&d->mutex);
@@ -1152,7 +1153,7 @@ QLuaConsole::readLine(QByteArray prompt)
 /*! Abort the current \a readLine operation.
   This is ignored if the console is not reading a line. */
 
-void 
+void
 QLuaConsole::abortReadLine()
 {
   QMutexLocker lock(&d->mutex);
@@ -1162,10 +1163,10 @@ QLuaConsole::abortReadLine()
 
 
 /*! Causes the current \a readLine operation
-  to redisplay the line because it may have been garbled by extra printouts. 
+  to redisplay the line because it may have been garbled by extra printouts.
   This does not work yet. */
 
-void 
+void
 QLuaConsole::redisplayReadLine()
 {
   d->command(RedisplayCmd);

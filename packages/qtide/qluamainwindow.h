@@ -14,6 +14,7 @@
 #include <QMainWindow>
 #include <QMessageBox>
 #include <QObject>
+#include <QtPrintSupport/QPrintDialog>
 #include <QWidget>
 
 
@@ -51,7 +52,7 @@ public:
   virtual void loadSettings();
   virtual void saveSettings();
   virtual bool canClose();
-                              
+
 public slots:
   virtual void updateActions();
   virtual void updateActionsLater();

@@ -1,7 +1,7 @@
 # -*- cmake -*-
 
 INCLUDE_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}")
-INCLUDE(${QT_USE_FILE})		     
+INCLUDE_DIRECTORIES(${QT5Widgets_INCLUDE_DIR})
 
 SET(qtwidget_SRC 
   qtluapainter.h qtluapainter.cpp
@@ -11,7 +11,7 @@ SET(qtwidget_SRC
 
 MACRO_INSTALL_QTLUA_FILES(qtwidget init.lua)
 
-MACRO_QT4_AUTOGEN(qtwidget_GEN ${qtwidget_SRC})
+MACRO_QT5_AUTOGEN(qtwidget_GEN ${qtwidget_SRC})
 MACRO_ADD_QTLUA_MODULE(libqtwidget ${qtwidget_SRC} ${qtwidget_GEN})
 
 #ADD_TORCH_DOK(dok qtwidget "QT Interface" "Widgets and events" 6.)

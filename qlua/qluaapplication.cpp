@@ -88,7 +88,7 @@ public:
   QLuaConsole *theConsole;
   QtLuaEngine *theEngine;
   Thread *theThread;
-  
+
   int savedArgc;
   char **savedArgv;
   int  ttyEofCount;
@@ -153,7 +153,7 @@ signals:
 };
 
 
-QLuaApplication::Private::Thread::Thread(QLuaApplication::Private *d) 
+QLuaApplication::Private::Thread::Thread(QLuaApplication::Private *d)
   : QThread(d->theApp), d(d), engine(0), loop(0)
 {
   connect(this,SIGNAL(restart()),d,SLOT(start()),Qt::QueuedConnection);
@@ -172,13 +172,13 @@ QLuaApplication::Private::Thread::preRun()
   engine->nameObject(d->theEngine, "qEngine");
   engine->nameObject(d->theConsole, "qConsole");
   connect(engine, SIGNAL(stateChanged(int)),
-          d, SLOT(stateChanged(int)), 
+          d, SLOT(stateChanged(int)),
           Qt::QueuedConnection);
   // Advertise the new engine
   emit d->theApp->newEngine(engine);
   // Causes the emission of the first stateChanged() message.
-  QtLuaLocker lock(engine); 
-  lock.setRunning(); 
+  QtLuaLocker lock(engine);
+  lock.setRunning();
 }
 
 
@@ -261,9 +261,9 @@ QLuaApplication::Private::~Private()
 
 QLuaApplication::Private::Private(QLuaApplication *q)
   : QObject(q),
-    theApp(q), 
-    theConsole(0), 
-    theEngine(0), 
+    theApp(q),
+    theConsole(0),
+    theEngine(0),
     theThread(new Thread(this)),
     savedArgc(0),
     savedArgv(0),
@@ -351,7 +351,7 @@ QLuaApplication::Private::printUsage()
            "  -title s      set the main window title to 's'\n"
 #endif
            "  ...           see the Qt documentation for more options\n"),
-          programName); 
+          programName);
   return 0;
 }
 
@@ -384,7 +384,7 @@ QLuaApplication::Private::printBadOption(const char *option)
 }
 
 
-int 
+int
 QLuaApplication::Private::doCall(struct lua_State *L, int nargs)
 {
   int status;
@@ -405,7 +405,7 @@ QLuaApplication::Private::doCall(struct lua_State *L, int nargs)
 }
 
 
-int 
+int
 QLuaApplication::Private::doLibrary(struct lua_State *L, const char *s)
 {
   lua_getglobal(L, "require");
@@ -419,7 +419,7 @@ QLuaApplication::Private::doLibrary(struct lua_State *L, const char *s)
 }
 
 
-int 
+int
 QLuaApplication::Private::doString(struct lua_State *L,
                                    const char *s)
 {
@@ -432,8 +432,8 @@ QLuaApplication::Private::doString(struct lua_State *L,
 }
 
 
-int 
-QLuaApplication::Private::doScript(struct lua_State *L, 
+int
+QLuaApplication::Private::doScript(struct lua_State *L,
                                    int argc, char **argv, int argn)
 {
   int i;
@@ -498,13 +498,13 @@ QLuaApplication::Private::processArguments(int argc, char **argv)
   // Obtain and lock lua
   QtLuaLocker lua(theEngine);
   globalL = lua;
-  
+
   // Good time to limit access to QtLuaConsole
   lua_pushcfunction(lua, hook_qluaconsole);
   luaQ_pushmeta(lua, &QLuaConsole::staticMetaObject);
   lua_call(lua, 1, 0);
 
-  // parse lua argument 
+  // parse lua argument
   int argn = 1;
   int status;
   while (argn < argc)
@@ -521,20 +521,20 @@ QLuaApplication::Private::processArguments(int argc, char **argv)
       switch(s[1])
         {
         case '-':
-          if (s[2]) 
+          if (s[2])
             return printBadOption(s);
           break;
         case 'i':
           if (!strcmp(s, "-ide") || !strncmp(s, "-ide=", 5))
             break;
-          else if (s[2]) 
+          else if (s[2])
             return printBadOption(s);
           interactive = ttyConsole = true;
           theConsole->setCtrlCHandler(QLuaConsole::ctrlCBreak);
           theConsole->setPrintCapturedOutput(true);
           break;
         case 'v':
-          if (s[2]) 
+          if (s[2])
             return printBadOption(s);
           has_v = true;
           break;
@@ -614,7 +614,7 @@ QLuaApplication::Private::processArguments(int argc, char **argv)
 // -------- interaction
 
 
-void 
+void
 QLuaApplication::Private::stateChanged(int state)
 {
   // safeguard
@@ -674,7 +674,7 @@ QLuaApplication::Private::stateChanged(int state)
             { theApp->exit(status = EXIT_SUCCESS); return; }
         }
       // go in interactive mode
-      if (!interactionStarted)  
+      if (!interactionStarted)
         {
           interactionStarted = true;
           theApp->setupConsoleOutput();
@@ -691,7 +691,7 @@ QLuaApplication::Private::stateChanged(int state)
 }
 
 
-void 
+void
 QLuaApplication::Private::consoleBreak()
 {
   if (! theEngine->stop(true) )
@@ -700,7 +700,7 @@ QLuaApplication::Private::consoleBreak()
 }
 
 
-void 
+void
 QLuaApplication::Private::acceptInput(bool clear)
 {
   // update the prompt
@@ -709,8 +709,8 @@ QLuaApplication::Private::acceptInput(bool clear)
   if (L)
     {
       struct lua_State *L = lua;
-      lua_getfield(L, LUA_GLOBALSINDEX, "_PROMPT");
-      lua_getfield(L, LUA_GLOBALSINDEX, "_PROMPT2");
+      lua_getglobal(L,"_PROMPT");
+      lua_getglobal(L, "_PROMPT2");
       luaPrompt = lua_isstring(L,-2) ? lua_tostring(L, -2) : "> ";
       luaPrompt2 = lua_isstring(L,-1) ? lua_tostring(L, -1) : ">> ";
       lua_pop(L, 2);
@@ -736,7 +736,7 @@ QLuaApplication::Private::acceptInput(bool clear)
 }
 
 
-void 
+void
 QLuaApplication::Private::ttyInput(QByteArray ba)
 {
   // are we in a pause?
@@ -755,7 +755,7 @@ QLuaApplication::Private::ttyInput(QByteArray ba)
           if (! theApp->close())
             acceptInput(true);
         }
-      else if (ba.size()==0 || ba[0]=='n' || ba[0]=='N') 
+      else if (ba.size()==0 || ba[0]=='n' || ba[0]=='N')
         {
           ttyEofCount = 0;
           acceptInput(true);
@@ -784,7 +784,7 @@ QLuaApplication::Private::ttyInput(QByteArray ba)
   if (! status)
     {
       status = luaL_loadbuffer(L, data, luaInput.size(), "=stdin");
-      if (status == LUA_ERRSYNTAX) 
+      if (status == LUA_ERRSYNTAX)
         {
           size_t lmsg;
           const char *msg = lua_tolstring(L, -1, &lmsg);
@@ -845,7 +845,7 @@ QLuaApplication::Private::runCommand(QByteArray cmd, bool ttyEcho)
 }
 
 
-void 
+void
 QLuaApplication::Private::ttyEndOfFile()
 {
   if (++ttyEofCount > 8)
@@ -890,7 +890,7 @@ capitalize(QString s)
   Processes command line arguments directed to Qt
   and leaves the remaining command line arguments alone. */
 
-QLuaApplication::QLuaApplication(int &argc, char **argv, 
+QLuaApplication::QLuaApplication(int &argc, char **argv,
                                  bool guiEnabled, bool onethread)
   : QApplication(argc, argv, guiEnabled),
     d(new Private(this))
@@ -904,7 +904,7 @@ QLuaApplication::QLuaApplication(int &argc, char **argv,
   d->programName = d->programNameData.constData();
   QRegExp re("^(mac(?=qlua)|win(?=qlua)|)(q?)(.*)", Qt::CaseInsensitive);
   cuteName = capitalize(cuteName);
-  if (re.indexIn(cuteName) >= 0 && re.numCaptures() == 3)
+  if (re.indexIn(cuteName) >= 0 && re.captureCount() == 3)
     cuteName = capitalize(re.cap(2)) + capitalize(re.cap(3));
 
   // basic setup
@@ -925,7 +925,7 @@ QLuaApplication::QLuaApplication(int &argc, char **argv,
 # endif
   qt_mac_set_menubar_icons(false);
 #endif
-  
+
   // create console
   //   It is important to create this first because
   //   the console code ensures that posix signals are
@@ -946,7 +946,7 @@ QLuaApplication::QLuaApplication(int &argc, char **argv,
 
 // --- startup
 
-/*! Start the lua engine and enter the qt main loop. 
+/*! Start the lua engine and enter the qt main loop.
   Arguments \a argc and \a argv replicate the
   behavior of the traditional \a "lua" command line
   program. */
@@ -990,7 +990,7 @@ QLuaApplication::console()
 
 
 /*! Return the currently running QtLuaEngine.
-  This can change or even be zero 
+  This can change or even be zero
   when one calls \a restart(). */
 
 QtLuaEngine *
@@ -1004,17 +1004,17 @@ QLuaApplication::engine()
 /*! Tells whether the application is accepting
   interactive commands with \a runCommand. */
 
-bool 
+bool
 QLuaApplication::isAcceptingCommands() const
 {
   return d->accepting;
 }
 
 
-/*! Tells if the application is running a close sequence.  
+/*! Tells if the application is running a close sequence.
   This is not the same as \a QCoreApplication::closingDown(). */
 
-bool 
+bool
 QLuaApplication::isClosingDown() const
 {
   return d->closingDown;
@@ -1030,7 +1030,7 @@ QLuaApplication::isClosingDown() const
  */
 
 /*! \signal acceptingCommands(bool)
-  Indicates whether the application is currently 
+  Indicates whether the application is currently
   accepting Lua commands using \a runCommand().
  */
 
@@ -1054,14 +1054,14 @@ QLuaApplication::isClosingDown() const
 /*! \signal fileOpenEvent()
   This is emitted when we receive a \a QFileOpenEvent.
   Use \a filesToOpen to obtain the filenames.
-  This is a Macintosh thing... 
+  This is a Macintosh thing...
 */
 
 /*! \signal windowShown(QWidget *window)
   This signal indicates that a new toplevel window is ready to be shown.
   Clients can capture this signal to implement window placement policies
   such as capturing the windows into a MDI environment.
-  This feature works by intercepting events of type QEvent::Show. 
+  This feature works by intercepting events of type QEvent::Show.
   Be careful as a window can be shown several times!
 */
 
@@ -1073,7 +1073,7 @@ QLuaApplication::isClosingDown() const
 /*! Read application settings for key \a key.
    This function can be useful to lua programs. */
 
-QVariant 
+QVariant
 QLuaApplication::readSettings(QString key)
 {
   QSettings s;
@@ -1084,7 +1084,7 @@ QLuaApplication::readSettings(QString key)
 /*! Write application settings for key \a key.
    This function can be useful to lua programs. */
 
-void 
+void
 QLuaApplication::writeSettings(QString key, QVariant value)
 {
   QSettings s;
@@ -1095,10 +1095,10 @@ QLuaApplication::writeSettings(QString key, QVariant value)
 }
 
 
-/*! Return files that were passed to the system 
+/*! Return files that were passed to the system
   using QFileOpenEvent messages, then clears the list. */
 
-QStringList 
+QStringList
 QLuaApplication::filesToOpen()
 {
   QStringList l = d->filesToOpen;
@@ -1109,25 +1109,25 @@ QLuaApplication::filesToOpen()
 
 /*! Return true if qlua option -nographics is in effect. */
 
-bool 
+bool
 QLuaApplication::runsWithoutGraphics() const
 {
-  return (QApplication::type() == QApplication::Tty);
+  return 1;
 }
 
 
-/*! Return the number of seconds elapsed for 
+/*! Return the number of seconds elapsed for
   running the last command with \a runCommand.
   This is invalid while the command is running. */
 
-double 
+double
 QLuaApplication::timeForLastCommand() const
 {
   return d->elapsed;
 }
 
 
-bool 
+bool
 QLuaApplication::event(QEvent *e)
 {
   if (e->type() == QEvent::FileOpen)
@@ -1162,7 +1162,7 @@ QLuaApplication::event(QEvent *e)
 }
 
 
-bool 
+bool
 QLuaApplication::notify(QObject *receiver, QEvent *event)
 {
   // capture window polish events
@@ -1171,7 +1171,7 @@ QLuaApplication::notify(QObject *receiver, QEvent *event)
       {
         QWidget *w = static_cast<QWidget*>(receiver);
         if (w->windowType() == Qt::Window)
-#if QT_VERSION >= 0x040400 
+#if QT_VERSION >= 0x040400
           if (!w->testAttribute(Qt::WA_DontShowOnScreen))
 #endif
             emit windowShown(w);
@@ -1186,7 +1186,7 @@ QLuaApplication::notify(QObject *receiver, QEvent *event)
   and the presence of a console. This should be called whenever
   a user of the console output appears or disappears. */
 
-void 
+void
 QLuaApplication::setupConsoleOutput()
 {
   bool capture = false;
@@ -1197,7 +1197,7 @@ QLuaApplication::setupConsoleOutput()
 
 
 /*! Execute an interactive Lua command.
-  This function could be called after 
+  This function could be called after
   receiving \a acceptingCommands(true)
   for executing lua command entered by the user.
   It immediately returns \a false if predicate
@@ -1206,7 +1206,7 @@ QLuaApplication::setupConsoleOutput()
   and displays the command on the console when
   available. */
 
-bool 
+bool
 QLuaApplication::runCommand(QByteArray cmd)
 {
   if (d->accepting)
@@ -1256,7 +1256,7 @@ QLuaApplication::restart(bool redoCmdLine)
   Contains the message displayed by \a about().
   Substring \a "${APPNAME}" is replaced by the application name. */
 
-QString 
+QString
 QLuaApplication::aboutMessage() const
 {
   QString an = applicationName();
@@ -1264,7 +1264,7 @@ QLuaApplication::aboutMessage() const
 }
 
 
-void 
+void
 QLuaApplication::setAboutMessage(QString m)
 {
   d->aboutMessage = m;
@@ -1274,7 +1274,7 @@ QLuaApplication::setAboutMessage(QString m)
 /*! Display an dialog with the about message
   specified by property \a aboutMessage. */
 
-void 
+void
 QLuaApplication::about()
 {
   QWidget *w = qobject_cast<QWidget*>(sender());
@@ -1283,7 +1283,7 @@ QLuaApplication::about()
 }
 
 
-/*! Quit the application properly, 
+/*! Quit the application properly,
   First sends a close event to the application.
   The default close event handler closes all
   windows and accepts the event in case of success.
@@ -1307,7 +1307,7 @@ QLuaApplication::close()
   return d->closingDown;
 }
 
-  
+
 
 
 

@@ -27,21 +27,23 @@ SET(WITH_QTLUA_IDE ON
 
 # --- Macros
 
-INCLUDE(MacroQt4AutoGen)
+INCLUDE(MacroQt5AutoGen)
 INCLUDE(MacroAddQtLuaModule)
 INCLUDE(CheckCXXSourceCompiles)
 INCLUDE(CheckCXXSourceRuns)
 
-# --- Qt4
+# --- Qt5
 
-SET(QT_MIN_VERSION "4.3.0")
-FIND_PACKAGE(Qt4 REQUIRED)
-
+SET(QT_MIN_VERSION "5.2.0")
+find_package(Qt5 5.2.0 CONFIG REQUIRED Widgets Test Declarative WebKit Script Network PrintSupport Svg UiTools)
+SET(QT_LIBRARIES Qt5::Core Qt5::Widgets Qt5::Gui Qt5::PrintSupport Qt5::Svg Qt5::UiTools)
 # --- Lua
 
 # Include Lua Files
 FIND_PACKAGE(Lua REQUIRED)
 INCLUDE_DIRECTORIES(${LUA_INCDIR})
+
+SET(LUA_LIBRARIES lua)
 
 ## Hard to check because of issues with RPATH
 ## The compiled program looks for the lua library

@@ -46,21 +46,21 @@
 
 namespace QLuaActionHelpers {
 
-  QAction * 
+  QAction *
   operator<<(QAction *action, QIcon icon)
   {
     action->setIcon(icon);
     return action;
   }
-  
-  QAction * 
+
+  QAction *
   operator<<(QAction *action, QActionGroup &group)
   {
     action->setActionGroup(&group);
     return action;
   }
-  
-  QAction * 
+
+  QAction *
   operator<<(QAction *action, QKeySequence shortcut)
   {
     QList<QKeySequence> shortcuts = action->shortcuts();
@@ -68,8 +68,8 @@ namespace QLuaActionHelpers {
     action->setShortcuts(shortcuts);
     return action;
   }
-  
-  QAction * 
+
+  QAction *
   operator<<(QAction *action, QString string)
   {
     if (action->text().isEmpty())
@@ -80,21 +80,21 @@ namespace QLuaActionHelpers {
       action->setWhatsThis(string);
     return action;
   }
-  
+
   QAction *
   operator<<(QAction *action, Connection c)
   {
     QObject::connect(action, SIGNAL(triggered(bool)), c.o, c.s);
     return action;
   }
-  
+
   QAction *
   operator<<(QAction *action, QVariant variant)
   {
     action->setData(variant);
     return action;
   }
-  
+
   QAction *
   operator<<(QAction *action, QAction::MenuRole role)
   {
@@ -102,7 +102,7 @@ namespace QLuaActionHelpers {
     return action;
   }
 
-  QAction* 
+  QAction*
   operator<<(QAction *a, NewAction b)
   {
     a->setText(b.text);
@@ -147,7 +147,7 @@ public:
   QMap<QByteArray,QAction*> actions;
   QSet<QWidget*> closeSet;
   bool closingDown;
-                  
+
 public slots:
   void destroyed(QObject*);
   void newEngine();
@@ -177,8 +177,8 @@ QLuaIde::Private::~Private()
 
 
 QLuaIde::Private::Private(QLuaIde *q)
-  : QObject(q), 
-    q(q), 
+  : QObject(q),
+    q(q),
     uid(1),
     editOnError(false),
     windowsChangedScheduled(false),
@@ -214,7 +214,7 @@ QLuaIde::Private::findEditor(QString fname)
 }
 
 
-void 
+void
 QLuaIde::Private::scheduleWindowsChanged()
 {
   if (!windowsChangedScheduled)
@@ -223,7 +223,7 @@ QLuaIde::Private::scheduleWindowsChanged()
 }
 
 
-void 
+void
 QLuaIde::Private::emitWindowsChanged()
 {
   windowsChangedScheduled = false;
@@ -295,7 +295,7 @@ QLuaIde::Private::newEngine()
 }
 
 
-void 
+void
 QLuaIde::Private::updateLuaActions()
 {
   QLuaApplication *app = QLuaApplication::instance();
@@ -322,7 +322,7 @@ QLuaIde::Private::updateLuaActions()
 }
 
 
-void 
+void
 QLuaIde::Private::luaAcceptingCommands(bool accepting)
 {
   if (accepting && !executeWhenAccepting.isEmpty())
@@ -336,7 +336,7 @@ QLuaIde::Private::luaAcceptingCommands(bool accepting)
 }
 
 
-static bool 
+static bool
 errorMessageFname(QString fname, int lineno, QString msg, int level)
 {
   QFileInfo info(fname);
@@ -346,16 +346,16 @@ errorMessageFname(QString fname, int lineno, QString msg, int level)
       e->widget()->showLine(lineno);
       if (level)
         msg = QLuaIde::Private::tr("Error: called from here.");
-      else 
+      else
         msg = QLuaIde::Private::tr("Error: ") + msg;
       e->showStatusMessage(msg);
       return true;
     }
   return false;
-}  
+}
 
 
-static bool 
+static bool
 errorMessageEname(QString ename, int lineno, QString msg, int level)
 {
   QtLuaEngine *engine = QLuaApplication::engine();
@@ -365,9 +365,9 @@ errorMessageEname(QString ename, int lineno, QString msg, int level)
     {
       QLuaIde::instance()->activateWidget(e);
       e->widget()->showLine(lineno);
-      if (level) 
+      if (level)
         msg = QLuaIde::Private::tr("Error: called from here.");
-      else 
+      else
         msg = QLuaIde::Private::tr("Error: ") + msg;
       e->showStatusMessage(msg);
       return true;
@@ -413,7 +413,7 @@ QLuaIde::Private::errorMessage(QByteArray m)
 }
 
 
-void 
+void
 QLuaIde::Private::updateWindowMenu()
 {
   QWidget *active = q->activeWindow();
@@ -425,7 +425,7 @@ QLuaIde::Private::updateWindowMenu()
       foreach(QAction *action, menu->actions())
         if (action->isCheckable())
           {
-            QObject *object = qVariantValue<QObject*>(action->data());
+            QObject *object = (action->data()).value<QObject*>();
             if (object && windows.contains(object))
               {
                 QWidget *window = qobject_cast<QWidget*>(object);
@@ -448,7 +448,7 @@ QLuaIde::Private::updateWindowMenu()
 }
 
 
-void 
+void
 QLuaIde::Private::fillWindowMenu()
 {
   QAction *menuaction = q->hasAction("MenuWindows");
@@ -492,13 +492,13 @@ QLuaIde::Private::fillWindowMenu()
 }
 
 
-void 
+void
 QLuaIde::Private::doWindowMenuItem()
 {
   QAction *a = qobject_cast<QAction*>(sender());
   if (a)
     {
-      QObject *o = qVariantValue<QObject*>(a->data());
+      QObject *o = (a->data()).value<QObject*>();
       if (o && windows.contains(o))
         {
           QWidget *w = qobject_cast<QWidget*>(o);
@@ -509,7 +509,7 @@ QLuaIde::Private::doWindowMenuItem()
 }
 
 
-void 
+void
 QLuaIde::Private::fillRecentMenu()
 {
   QAction *menuaction = q->hasAction("MenuOpenRecent");
@@ -537,7 +537,7 @@ QLuaIde::Private::fillRecentMenu()
 }
 
 
-void 
+void
 QLuaIde::Private::doRecentMenuItem()
 {
   QAction *action = qobject_cast<QAction*>(sender());
@@ -585,20 +585,20 @@ QLuaIde::QLuaIde()
     engine->nameObject(this);
   // pickup existing visible windows.
   foreach(QWidget *w, QApplication::topLevelWidgets())
-    if (w->windowType() == Qt::Window && w->isVisible() 
+    if (w->windowType() == Qt::Window && w->isVisible()
         && ! w->testAttribute(Qt::WA_DontShowOnScreen) )
       d->windowShown(w);
 }
 
 
-bool 
+bool
 QLuaIde::editOnError() const
 {
   return d->editOnError;
 }
 
 
-bool 
+bool
 QLuaIde::mdiDefault() const
 {
 #ifdef Q_WS_WIN
@@ -643,14 +643,14 @@ QLuaIde::defaultMenuBar(QMenuBar *menu)
 }
 
 
-QObjectList 
+QObjectList
 QLuaIde::windows() const
 {
   return d->windows;
 }
 
 
-QStringList 
+QStringList
 QLuaIde::windowNames() const
 {
   QStringList s;
@@ -661,20 +661,20 @@ QLuaIde::windowNames() const
 }
 
 
-QStringList 
+QStringList
 QLuaIde::recentFiles() const
 {
   return d->recentFiles;
 }
 
 
-void 
+void
 QLuaIde::setEditOnError(bool b)
 {
   d->editOnError = b;
 }
 
-void 
+void
 QLuaIde::addRecentFile(QString fname)
 {
   d->recentFiles.removeAll(fname);
@@ -684,7 +684,7 @@ QLuaIde::addRecentFile(QString fname)
 }
 
 
-void 
+void
 QLuaIde::clearRecentFiles()
 {
   QSettings s;
@@ -693,7 +693,7 @@ QLuaIde::clearRecentFiles()
 }
 
 
-void 
+void
 QLuaIde::loadRecentFiles()
 {
   QSettings s;
@@ -701,7 +701,7 @@ QLuaIde::loadRecentFiles()
 }
 
 
-void 
+void
 QLuaIde::saveRecentFiles()
 {
   QSettings s;
@@ -709,7 +709,7 @@ QLuaIde::saveRecentFiles()
 }
 
 
-void 
+void
 QLuaIde::activateWidget(QWidget *w)
 {
   if (w)
@@ -725,7 +725,7 @@ QLuaIde::activateWidget(QWidget *w)
 }
 
 
-void 
+void
 QLuaIde::activateConsole(QWidget *returnTo)
 {
   if (returnTo && returnTo != d->sdiMain)
@@ -737,7 +737,7 @@ QLuaIde::activateConsole(QWidget *returnTo)
 }
 
 
-void 
+void
 QLuaIde::loadWindowGeometry(QWidget *w)
 {
   QString name = w->objectName();
@@ -747,8 +747,8 @@ QLuaIde::loadWindowGeometry(QWidget *w)
       QDockWidget *dw = 0;
       QMdiSubWindow *sw = 0;
       QMainWindow *mw = qobject_cast<QMainWindow*>(w);
-      while (w && w->windowType() != Qt::Window && w->parentWidget() 
-             && ! (sw = qobject_cast<QMdiSubWindow*>(w)) 
+      while (w && w->windowType() != Qt::Window && w->parentWidget()
+             && ! (sw = qobject_cast<QMdiSubWindow*>(w))
              && ! (dw = qobject_cast<QDockWidget*>(w)) )
         w = w->parentWidget();
       // proceed
@@ -765,7 +765,7 @@ QLuaIde::loadWindowGeometry(QWidget *w)
 }
 
 
-void 
+void
 QLuaIde::saveWindowGeometry(QWidget *w)
 {
   QString name = w->objectName();
@@ -775,8 +775,8 @@ QLuaIde::saveWindowGeometry(QWidget *w)
       QDockWidget *dw = 0;
       QMdiSubWindow *sw = 0;
       QMainWindow *mw = qobject_cast<QMainWindow*>(w);
-      while (w && w->windowType() != Qt::Window && w->parentWidget() 
-             && ! (sw = qobject_cast<QMdiSubWindow*>(w)) 
+      while (w && w->windowType() != Qt::Window && w->parentWidget()
+             && ! (sw = qobject_cast<QMdiSubWindow*>(w))
              && ! (dw = qobject_cast<QDockWidget*>(w)) )
         w = w->parentWidget();
       // proceed
@@ -800,7 +800,7 @@ QLuaIde::previousWindow() const
 }
 
 
-QWidget* 
+QWidget*
 QLuaIde::activeWindow() const
 {
   QWidget *window  = QApplication::activeWindow();
@@ -906,7 +906,7 @@ QLuaIde::createMdiMain()
     {
       activateWidget(m);
     }
-  else 
+  else
     {
       // create
       m = new QLuaMdiMain();
@@ -952,8 +952,8 @@ QLuaIde::hasAction(QByteArray name)
     return d->actions[name];
   return 0;
 }
- 
- 
+
+
 QAction *
 QLuaIde::stdAction(QByteArray name)
 {
@@ -980,7 +980,7 @@ QLuaIde::stdAction(QByteArray name)
       QMenu *menu = newMenu(tr("&Windows","windows|"));
       connect(menu, SIGNAL(aboutToShow()),
               d, SLOT(updateWindowMenu()) );
-      connect(this, SIGNAL(windowsChanged()), 
+      connect(this, SIGNAL(windowsChanged()),
               d, SLOT(fillWindowMenu()) );
       action = menu->menuAction();
       d->fillWindowMenu();
@@ -989,7 +989,7 @@ QLuaIde::stdAction(QByteArray name)
     {
       QMenu *menu = newMenu(tr("&Help", "help|"));
       menu->addAction(stdAction("ActionHelp"));
-      menu->addSeparator();     
+      menu->addSeparator();
       menu->addAction(stdAction("ActionAbout"));
       menu->addAction(stdAction("ActionAboutQt"));
       action = menu->menuAction();
@@ -1049,7 +1049,7 @@ QLuaIde::stdAction(QByteArray name)
     }
   else if (name == "ActionPreferences")
     {
-      action = newAction(tr("&Preferences", "edit|prefs")) 
+      action = newAction(tr("&Preferences", "edit|prefs"))
         << QIcon(":/images/editprefs.png")
         << Connection(this, SLOT(doPreferences()))
         << tr("Show the preference dialog.")
@@ -1112,7 +1112,7 @@ QLuaIde::stdAction(QByteArray name)
 }
 
 
-void 
+void
 QLuaIde::updateActions()
 {
   d->updateLuaActions();
@@ -1125,8 +1125,8 @@ QLuaIde::openFile(QString fileName, bool inOther, QWidget *window)
   bool okay = false;
   const QMetaObject *mo = (window) ? window->metaObject() : 0;
   // try calling a method 'bool openFile(QString, bool)'
-  if (mo && mo->invokeMethod(window, "openFile", 
-                             Q_RETURN_ARG(bool, okay), 
+  if (mo && mo->invokeMethod(window, "openFile",
+                             Q_RETURN_ARG(bool, okay),
                              Q_ARG(QString, fileName),
                              Q_ARG(bool, inOther) ))
     if (okay)
@@ -1140,14 +1140,14 @@ QLuaIde::openFile(QString fileName, bool inOther, QWidget *window)
   return okay;
 }
 
-  
-bool 
+
+bool
 QLuaIde::newDocument(QWidget *window)
 {
   bool okay = false;
   const QMetaObject *mo = (window) ? window->metaObject() : 0;
   // try calling a method 'bool newDocument(QString)'
-  if (mo && mo->invokeMethod(window, "newDocument", 
+  if (mo && mo->invokeMethod(window, "newDocument",
                              Q_RETURN_ARG(bool, okay) ))
     if (okay)
       return okay;
@@ -1185,7 +1185,7 @@ QLuaIde::luaRestart(QByteArray cmd)
 }
 
 
-bool 
+bool
 QLuaIde::quit(QWidget *r)
 {
   bool okay = true;
@@ -1194,8 +1194,8 @@ QLuaIde::quit(QWidget *r)
       // confirm
       QString appName = QCoreApplication::applicationName();
       if ( ! QLuaApplication::instance()->isClosingDown())
-        if (QMessageBox::question((r) ? r : d->sdiMain, 
-                                  tr("Really Quit?"), 
+        if (QMessageBox::question((r) ? r : d->sdiMain,
+                                  tr("Really Quit?"),
                                   tr("Really quit %0?").arg(appName),
                                   QMessageBox::Ok|QMessageBox::Cancel,
                                   QMessageBox::Cancel) != QMessageBox::Ok )
@@ -1232,7 +1232,7 @@ QLuaIde::quit(QWidget *r)
 
 
 int
-QLuaIde::messageBox(QString t, QString m, 
+QLuaIde::messageBox(QString t, QString m,
                     QMessageBox::StandardButtons buttons,
                     QMessageBox::StandardButton def,
                     QMessageBox::Icon icon)
@@ -1268,12 +1268,12 @@ QLuaIde::messageBox(QString t, QString m, QByteArray buttons,
 }
 
 
-QString 
+QString
 QLuaIde::fileDialogFilters()
 {
   bool needHtml = true;
   QStringList filters;
-  foreach(QLuaTextEditModeFactory *mode, 
+  foreach(QLuaTextEditModeFactory *mode,
           QLuaTextEditModeFactory::factories())
     {
       filters += mode->filter();
@@ -1287,28 +1287,28 @@ QLuaIde::fileDialogFilters()
 }
 
 
-QString 
+QString
 QLuaIde::htmlFilesFilter()
 {
   return tr("HTML Files (*.html)");
 }
 
 
-QString 
+QString
 QLuaIde::allFilesFilter()
 {
   return tr("All Files (*)");
 }
 
 
-void 
+void
 QLuaIde::doNew()
 {
   newDocument(activeWindow());
 }
 
 
-void 
+void
 QLuaIde::doOpen()
 {
   QWidget *w = activeWindow();
@@ -1334,7 +1334,7 @@ QLuaIde::doOpen()
 }
 
 
-bool 
+bool
 QLuaIde::doClose()
 {
   QWidget *window = activeWindow();
@@ -1344,21 +1344,21 @@ QLuaIde::doClose()
 }
 
 
-bool 
+bool
 QLuaIde::doQuit()
 {
   return quit(activeWindow());
 }
 
 
-void 
+void
 QLuaIde::doReturnToConsole()
 {
   activateConsole(activeWindow());
 }
 
 
-void 
+void
 QLuaIde::doReturnToPrevious()
 {
   QWidget *w = activeWindow();
@@ -1369,7 +1369,7 @@ QLuaIde::doReturnToPrevious()
 }
 
 
-void 
+void
 QLuaIde::doLuaStop()
 {
   if (d->engine)
@@ -1377,7 +1377,7 @@ QLuaIde::doLuaStop()
 }
 
 
-void 
+void
 QLuaIde::doLuaPause()
 {
   QAction *action = stdAction("ActionLuaPause");
@@ -1391,14 +1391,14 @@ QLuaIde::doLuaPause()
 }
 
 
-void 
+void
 QLuaIde::doPreferences()
 {
   emit prefsRequested(activeWindow());
 }
 
 
-void 
+void
 QLuaIde::doHelp()
 {
   emit helpRequested(activeWindow());

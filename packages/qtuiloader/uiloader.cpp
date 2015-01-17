@@ -25,10 +25,10 @@ extern "C" {
 // ====================================
 
 
-static int 
+static int
 qtuiloader_new(lua_State *L)
 {
-  if (QApplication::type() == QApplication::Tty)
+  if (qobject_cast<QApplication *>(QCoreApplication::instance()))
     luaL_error(L, "Graphics have been disabled (running with -nographics)");
   QObject *parent = luaQ_optqobject<QObject>(L, 1, 0);
   QUiLoader *q = new QUiLoader(parent);
@@ -126,7 +126,7 @@ qtuiloader_load(lua_State *L)
       const char *fn = lua_tostring(L, 2);
       afile.setFileName(QFile::decodeName(fn));
       if (! afile.open(QIODevice::ReadOnly))
-        luaL_error(L,"cannot open file '%s' for reading (%s)", 
+        luaL_error(L,"cannot open file '%s' for reading (%s)",
                    fn, afile.errorString().toLocal8Bit().constData() );
     }
   else if (!file)
@@ -134,7 +134,7 @@ qtuiloader_load(lua_State *L)
       file = &afile;
       void *udata = luaL_checkudata(L, 2, LUA_FILEHANDLE);
       if (! afile.open(*(FILE**)udata, QIODevice::ReadOnly))
-        luaL_error(L,"cannot use stream for reading (%s)", 
+        luaL_error(L,"cannot use stream for reading (%s)",
                    afile.errorString().toLocal8Bit().constData() );
     }
   // parent

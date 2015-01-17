@@ -38,6 +38,7 @@
 #include <QMetaType>
 #include <QObject>
 #include <QPainter>
+#include <QtPrintSupport/QPrinter>
 #include <QPen>
 #include <QStatusBar>
 #include <QString>
@@ -60,8 +61,8 @@ Q_DECLARE_METATYPE(QPaintDevice*)
 // ========================================
 // HELPERS
 
-  
-static QMetaEnum 
+
+static QMetaEnum
 f_enumerator(const char *s, const QMetaObject *mo)
 {
   int index = mo->indexOfEnumerator(s);
@@ -72,7 +73,7 @@ f_enumerator(const char *s, const QMetaObject *mo)
 
 
 #ifndef Q_MOC_RUN
-static QMetaEnum 
+static QMetaEnum
 f_enumerator(const char *s)
 {
   struct QFakeObject : public QObject {
@@ -84,9 +85,9 @@ f_enumerator(const char *s)
 
 static void
 f_checktype(lua_State *L, int index, const char *name, int type)
-{ 
+{
   if (index)
-    lua_getfield(L,index,name); 
+    lua_getfield(L,index,name);
   int t = lua_type(L, -1);
   if (t != type)
     luaL_error(L, "%s expected in field '%s', got %s",
@@ -95,8 +96,8 @@ f_checktype(lua_State *L, int index, const char *name, int type)
 
 static bool
 f_opttype(lua_State *L, int index, const char *name, int type)
-{ 
-  lua_getfield(L,index,name); 
+{
+  lua_getfield(L,index,name);
   if (lua_isnoneornil(L, -1))
     return false;
   f_checktype(L, 0, name, type);
@@ -119,15 +120,15 @@ f_pushflag(lua_State *L, int value, const QMetaEnum &me)
 
 static void
 f_checkflag(lua_State *L, int index, const char *name, const QMetaEnum &me)
-{ 
+{
   if (index)
-    lua_getfield(L,index,name); 
+    lua_getfield(L,index,name);
   if (me.isValid() && lua_isstring(L, -1))
     {
       const char *s = lua_tostring(L, -1);
       int v = (me.isFlag()) ? me.keysToValue(s) : me.keyToValue(s);
       if (v == -1)
-        luaL_error(L, "value '%s' from field '%s' illegal for type %s::%s", 
+        luaL_error(L, "value '%s' from field '%s' illegal for type %s::%s",
                    s, name, me.scope(), me.name() );
       lua_pushinteger(L, v);
       lua_replace(L, -2);
@@ -143,8 +144,8 @@ f_checkflag(lua_State *L, int index, const char *name, const QMetaEnum &me)
 
 static bool
 f_optflag(lua_State *L, int index, const char *name, const QMetaEnum &me)
-{ 
-  lua_getfield(L,index,name); 
+{
+  lua_getfield(L,index,name);
   if (lua_isnoneornil(L, -1))
     return false;
   f_checkflag(L, 0, name, me);
@@ -153,9 +154,9 @@ f_optflag(lua_State *L, int index, const char *name, const QMetaEnum &me)
 
 static void
 f_checkvar(lua_State *L, int index, const char *name, int tid)
-{ 
+{
   if (index)
-    lua_getfield(L,index,name); 
+    lua_getfield(L,index,name);
   QVariant v = luaQ_toqvariant(L, -1, tid);
   if (v.userType() != tid)
     luaL_error(L, "qt.%s expected in field '%s'", QMetaType::typeName(tid));
@@ -163,8 +164,8 @@ f_checkvar(lua_State *L, int index, const char *name, int tid)
 
 static bool
 f_optvar(lua_State *L, int index, const char *name, int tid)
-{ 
-  lua_getfield(L,index,name); 
+{
+  lua_getfield(L,index,name);
   if (lua_isnoneornil(L, -1))
     return false;
   f_checkvar(L, 0, name, tid);
@@ -302,7 +303,7 @@ qaction_new(lua_State *L)
       QAction *action = new QAction(0);
       luaQ_pushqt(L, action, true);
       lua_pushnil(L);
-      while (lua_next(L, 1)) 
+      while (lua_next(L, 1))
         {                        // [val key action
           lua_pushvalue(L, -2);  // [key val key action
           lua_insert(L, -3);     // [val key key action
@@ -358,7 +359,7 @@ qtluaaction_new(lua_State *L)
       QtLuaAction *action = new QtLuaAction(luaQ_engine(L));
       luaQ_pushqt(L, action, true);
       lua_pushnil(L);
-      while (lua_next(L, 1)) 
+      while (lua_next(L, 1))
         {                        // [val key action
           lua_pushvalue(L, -2);  // [key val key action
           lua_insert(L, -3);     // [val key key action
@@ -470,7 +471,7 @@ qbrush_totable(lua_State *L)
   f_pushflag(L, (int)style, m_style);
   lua_setfield(L, -2, "style");
   QVariant v;
-  switch (style) 
+  switch (style)
     {
     case Qt::LinearGradientPattern:
     case Qt::ConicalGradientPattern:
@@ -483,7 +484,7 @@ qbrush_totable(lua_State *L)
       v = QVariant(s.textureImage());
       luaQ_pushqt(L, v);
       lua_setfield(L, -2, "texture");
-      if (qVariantValue<QImage>(v).depth() > 1) 
+      if (v.value<QImage>().depth() > 1)
         break;
     default:
       v = QVariant(s.color());
@@ -514,7 +515,7 @@ static int
 qbrush_fromtable(lua_State *L)
 {
   QBrush s;
-  if (! lua_isnoneornil(L, 1)) 
+  if (! lua_isnoneornil(L, 1))
     {
       luaL_checktype(L, 1, LUA_TTABLE);
       QMetaEnum m_style = f_enumerator("BrushStyle");
@@ -523,33 +524,31 @@ qbrush_fromtable(lua_State *L)
       const int t_color = QMetaType::QColor;
       const int t_transform = QMetaType::QTransform;
       if (f_optvar(L, 1, "gradient", t_gradient))
-        s = QBrush(qVariantValue<QGradient>
-                   (luaQ_toqvariant(L, -1, t_gradient)));
+        s = QBrush((luaQ_toqvariant(L, -1, t_gradient)).value<QGradient>());
       lua_pop(L, 1);
       if (f_optvar(L, 1, "texture", t_image))
         {
-          // qt4.4 barks when creating an image texture 
+          // qt4.4 barks when creating an image texture
           // brush outside the gui thread.
           // s=QBrush(qVariantValue<QImage>(luaQ_toqvariant(L,-1,t_image)));
-          lua_pushcfunction(L, create_textured_brush); 
+          lua_pushcfunction(L, create_textured_brush);
           lua_insert(L, -2);
           luaQ_call(L, 1, 1, 0);
           const int t_brush = QMetaType::QBrush;
-          s = qVariantValue<QBrush>(luaQ_toqvariant(L, -1, t_brush));
+          s = (luaQ_toqvariant(L, -1, t_brush)).value<QBrush>();
         }
       lua_pop(L, 1);
       if (f_optflag(L, 1, "style", m_style))
         s.setStyle(Qt::BrushStyle(lua_tointeger(L, -1)));
       lua_pop(L, 1);
       if (f_optvar(L, 1, "color", t_color)) {
-        if (s.style() == Qt::NoBrush) 
+        if (s.style() == Qt::NoBrush)
           s.setStyle(Qt::SolidPattern);
-        s.setColor(qVariantValue<QColor>(luaQ_toqvariant(L, -1, t_color)));
+        s.setColor((luaQ_toqvariant(L, -1, t_color)).value<QColor>());
       }
       lua_pop(L, 1);
       if (f_optvar(L, 1, "transform", t_transform))
-        s.setTransform(qVariantValue<QTransform>
-                       (luaQ_toqvariant(L, -1, t_transform)));
+        s.setTransform((luaQ_toqvariant(L, -1, t_transform)).value<QTransform>());
     lua_pop(L, 1);
     }
   luaQ_pushqt(L, QVariant(s));
@@ -591,7 +590,7 @@ qcolor_fromtable(lua_State *L)
   luaQ_pushqt(L, QVariant(c));
   return 1;
 }
-  
+
 do_luareg(qcolor)
 do_hook(qcolor)
 
@@ -601,13 +600,13 @@ do_hook(qcolor)
 // QCOLORDIALOG
 
 
-static int 
+static int
 qcolordialog_getcolor(lua_State *L)
 {
   int i = 1;
   QColor color;
   QVariant vcolor = luaQ_toqvariant(L, i);
-  if (vcolor.userType() == qMetaTypeId<QColor>()) 
+  if (vcolor.userType() == qMetaTypeId<QColor>())
     color = luaQ_checkqvariant<QColor>(L, i++);
   QWidget *parent= luaQ_optqobject<QWidget>(L, i+1);
   color = QColorDialog::getColor(color, parent);
@@ -634,14 +633,14 @@ do_qhook(qcolordialog)
 // QCURSOR
 
 
-static QPixmap 
+static QPixmap
 lua_checkpixmap(lua_State *L, int index)
 {
   QVariant v = luaQ_toqvariant(L, index);
   if (v.userType() == qMetaTypeId<QImage>())
-    return QPixmap::fromImage(qVariantValue<QImage>(v));
+    return QPixmap::fromImage(v.value<QImage>());
   if (v.userType() == qMetaTypeId<QPixmap>())
-    return qVariantValue<QPixmap>(v);
+    return v.value<QPixmap>();
   luaL_error(L, "illegal argument");
   return QPixmap();
 }
@@ -745,7 +744,7 @@ do_qhook(qcursor)
 // QDIALOG
 
 
-static int 
+static int
 qdialog_new(lua_State *L)
 {
   QWidget *parent = luaQ_optqobject<QWidget>(L, 1);
@@ -801,7 +800,7 @@ f_checkfiledialogoption(lua_State *L, int index)
   return static_cast<QFDOption>(0);
 }
 
-static QFDOptions 
+static QFDOptions
 f_optfiledialogoptions(lua_State *L, int index, QFDOptions d)
 {
   if (lua_isnoneornil(L, index))
@@ -814,13 +813,13 @@ f_optfiledialogoptions(lua_State *L, int index, QFDOptions d)
   return static_cast<QFDOptions>(v);
 }
 
-static int 
+static int
 qfiledialog_new(lua_State *L)
 {
   QWidget *p = luaQ_optqobject<QWidget>(L, 1);
   QString c = luaQ_optqvariant<QString>(L, 2);
   QString d = luaQ_optqvariant<QString>(L, 3);
-  QString f = luaQ_optqvariant<QString>(L, 4);  
+  QString f = luaQ_optqvariant<QString>(L, 4);
   luaQ_pushqt(L, new QFileDialog(p,c,d,f), !p);
   return 1;
 }
@@ -927,7 +926,7 @@ qfiledialog_testoption(lua_State *L)
 }
 #endif
 
-static int 
+static int
 qfiledialog_getexistingdirectory(lua_State *L)
 {
   QWidget *p = luaQ_optqobject<QWidget>(L, 1);
@@ -939,7 +938,7 @@ qfiledialog_getexistingdirectory(lua_State *L)
   return 1;
 }
 
-static int 
+static int
 qfiledialog_getopenfilename(lua_State *L)
 {
   QWidget *p = luaQ_optqobject<QWidget>(L, 1);
@@ -954,7 +953,7 @@ qfiledialog_getopenfilename(lua_State *L)
   return 2;
 }
 
-static int 
+static int
 qfiledialog_getopenfilenames(lua_State *L)
 {
   QWidget *p = luaQ_optqobject<QWidget>(L, 1);
@@ -969,7 +968,7 @@ qfiledialog_getopenfilenames(lua_State *L)
   return 2;
 }
 
-static int 
+static int
 qfiledialog_getsavefilename(lua_State *L)
 {
   QWidget *p = luaQ_optqobject<QWidget>(L, 1);
@@ -997,7 +996,7 @@ static struct luaL_Reg qfiledialog_lib[] = {
 #endif
 #if QT_VERSION >= 0x40500
   {"setOption", qfiledialog_setoption},
-  {"testOption", qfiledialog_testoption},  
+  {"testOption", qfiledialog_testoption},
 #endif
   {"getExistingDirectory", qfiledialog_getexistingdirectory},
   {"getOpenFileName", qfiledialog_getopenfilename},
@@ -1011,7 +1010,7 @@ do_qhook(qfiledialog)
 
 // ========================================
 // QFONT
-  
+
 
 #define do_qfont(do) \
   do ## optstr("family",x=s.family(),s.setFamily(x)) \
@@ -1090,10 +1089,10 @@ qfont_info(lua_State *L)
 static struct luaL_Reg qfont_lib[] = {
   {"tostring", qfont_tostring },
   {"totable", qfont_totable },
-  {"new", qfont_fromtable }, 
+  {"new", qfont_fromtable },
   {"info", qfont_info },
-  {0,0} 
-}; 
+  {0,0}
+};
 
 do_hook(qfont)
 
@@ -1103,13 +1102,13 @@ do_hook(qfont)
 // QFONTDIALOG
 
 
-static int 
+static int
 qfontdialog_getfont(lua_State *L)
 {
   int i = 1;
   QFont font;
   QVariant vfont = luaQ_toqvariant(L, i);
-  if (vfont.userType() == qMetaTypeId<QFont>()) 
+  if (vfont.userType() == qMetaTypeId<QFont>())
     font = luaQ_checkqvariant<QFont>(L, i++);
   QWidget *parent= luaQ_optqobject<QWidget>(L, i+1);
   QString caption = luaQ_optqvariant<QString>(L, i+2);
@@ -1117,7 +1116,7 @@ qfontdialog_getfont(lua_State *L)
   if (caption.isNull())
     font = QFontDialog::getFont(&ok, font, parent);
   else
-    font = QFontDialog::getFont(&ok, font, parent, caption);    
+    font = QFontDialog::getFont(&ok, font, parent, caption);
   if (ok)
     luaQ_pushqt(L, font);
   else
@@ -1146,9 +1145,9 @@ qicon_new(lua_State *L)
   QVariant v = luaQ_toqvariant(L, 1);
   QVariant s = luaQ_toqvariant(L, 1, QMetaType::QString);
   if (v.userType() == QMetaType::QPixmap)
-    icon = QIcon(qVariantValue<QPixmap>(v));
+    icon = QIcon(v.value<QPixmap>());
   else if (v.userType() == QMetaType::QImage)
-    icon = QIcon(QPixmap::fromImage(qVariantValue<QImage>(v)));
+    icon = QIcon(QPixmap::fromImage(v.value<QImage>()));
   else if (s.userType() == QMetaType::QString)
     icon = QIcon(s.toString());
   else if (! lua_isnoneornil(L, 1))
@@ -1159,9 +1158,9 @@ qicon_new(lua_State *L)
 
 static struct luaL_Reg qicon_lib[] = {
   {"new", qicon_new },
-  {0,0} 
-}; 
-  
+  {0,0}
+};
+
 do_qhook(qicon)
 
 
@@ -1181,7 +1180,7 @@ qimage_new(lua_State *L)
       const char *format = luaL_optstring(L, 2, 0);
       QFile f;
       if (! f.open(*(FILE**)udata, QIODevice::ReadOnly))
-        luaL_error(L,"cannot use stream for reading (%s)", 
+        luaL_error(L,"cannot use stream for reading (%s)",
                    f.errorString().toLocal8Bit().constData() );
       if (!image.load(&f,format) || image.isNull())
         luaL_error(L,"unable to load image file");
@@ -1253,7 +1252,7 @@ qimage_save(lua_State *L)
     {
       void *udata = luaL_checkudata(L, 2, LUA_FILEHANDLE);
       if (! f.open(*(FILE**)udata, QIODevice::WriteOnly))
-        luaL_error(L,"cannot use stream for writing (%s)", 
+        luaL_error(L,"cannot use stream for writing (%s)",
                    f.errorString().toLocal8Bit().constData() );
       format = luaL_checkstring(L, 3);
     }
@@ -1332,7 +1331,7 @@ static luaL_Reg qimage_guilib[] = {
 };
 
 
-static int 
+static int
 qimage_hook(lua_State *L)
 {
   lua_getfield(L, -1, "__metatable");
@@ -1687,25 +1686,25 @@ qpen_totable(lua_State *L)
   f_pushflag(L, (int)s.joinStyle(), m_joinstyle);
   lua_setfield(L, -2, "joinStyle");
   luaQ_pushqt(L, QVariant(s.brush()));
-  lua_setfield(L, -2, "brush"); 
+  lua_setfield(L, -2, "brush");
   if (s.color().isValid())
     {
       luaQ_pushqt(L, QVariant(s.color()));
-      lua_setfield(L, -2, "color");  
+      lua_setfield(L, -2, "color");
     }
   lua_pushnumber(L, s.widthF());
-  lua_setfield(L, -2, "width");  
+  lua_setfield(L, -2, "width");
   lua_pushboolean(L, s.isCosmetic());
-  lua_setfield(L, -2, "cosmetic");  
+  lua_setfield(L, -2, "cosmetic");
   if (style != Qt::NoPen && style != Qt::SolidLine)
     {
       lua_pushnumber(L, s.dashOffset());
-      lua_setfield(L, -2, "dashOffset");  
+      lua_setfield(L, -2, "dashOffset");
     }
   if (s.joinStyle() == Qt::MiterJoin)
     {
       lua_pushnumber(L, s.miterLimit());
-      lua_setfield(L, -2, "miterLimit");  
+      lua_setfield(L, -2, "miterLimit");
     }
   if (style == Qt::CustomDashLine)
     {
@@ -1725,7 +1724,7 @@ static int
 qpen_fromtable(lua_State *L)
 {
   QPen s;
-  if (! lua_isnoneornil(L, 1)) 
+  if (! lua_isnoneornil(L, 1))
     {
       luaL_checktype(L, 1, LUA_TTABLE);
       QMetaEnum m_penstyle = f_enumerator("PenStyle");
@@ -1743,9 +1742,9 @@ qpen_fromtable(lua_State *L)
         s.setJoinStyle(Qt::PenJoinStyle(lua_tointeger(L, -1)));
       lua_pop(L, 1);
       if (f_optvar(L, 1, "color", t_color))
-        s.setColor(qVariantValue<QColor>(luaQ_toqvariant(L, -1, t_color)));
+        s.setColor((luaQ_toqvariant(L, -1, t_color)).value<QColor>());
       if (f_optvar(L, 1, "brush", t_brush))
-        s.setBrush(qVariantValue<QBrush>(luaQ_toqvariant(L, -1, t_brush)));
+        s.setBrush((luaQ_toqvariant(L, -1, t_brush)).value<QBrush>());
       if (f_opttype(L, 1, "width", LUA_TNUMBER))
         s.setWidthF(lua_tonumber(L, -1));
       lua_pop(L, 1);
@@ -1797,7 +1796,7 @@ do_hook(qpen)
   do ## optflt("m23",x=s.m23(),m23=x) \
   do ## optflt("m31",x=s.m31(),m31=x) \
   do ## optflt("m32",x=s.m32(),m32=x) \
-  do ## optflt("m33",x=s.m33(),m33=x) 
+  do ## optflt("m33",x=s.m33(),m33=x)
 
 
 do_totable(QTransform,qtransform,do_qtransform)
@@ -1913,7 +1912,7 @@ qtransform_map(lua_State *L)
   QTransform c = luaQ_checkqvariant<QTransform>(L, 1);
   QVariant v = luaQ_toqvariant(L, 2);
   int type = v.userType();
-  if (lua_isnumber(L, 2)) 
+  if (lua_isnumber(L, 2))
     {
         qreal tx, ty;
         qreal x = luaL_checknumber(L, 2);
@@ -1921,10 +1920,10 @@ qtransform_map(lua_State *L)
         c.map(x,y,&tx,&ty);
         lua_pushnumber(L, tx);
         lua_pushnumber(L, ty);
-        return 2; 
-    } 
+        return 2;
+    }
 #define DO(T,M) else if (type == qMetaTypeId<T>()) \
-      luaQ_pushqt(L, qVariantFromValue<T>(c.M(qVariantValue<T>(v))))
+      luaQ_pushqt(L, qVariantFromValue<T>(c.M((v.value<T>()))))
   DO(QPoint,map);
   DO(QPointF,map);
   DO(QLine,map);
@@ -1937,7 +1936,8 @@ qtransform_map(lua_State *L)
   DO(QRectF,mapRect);
 #undef DO
   else
-    luaL_typerror(L, 2, "point, polygon, region, or path");
+    lua_pushstring(L, "point, polygon, region, or path");
+    lua_error(L);
   return 1;
 }
 
@@ -1963,7 +1963,7 @@ do_hook(qtransform)
 
 #if HAVE_QTWEBKIT
 
-static int 
+static int
 qwebview_new(lua_State *L)
 {
   QWidget *parent = luaQ_optqobject<QWidget>(L, 1);
@@ -2006,7 +2006,7 @@ do_qhook(qwebview)
 // QWIDGET
 
 
-static int 
+static int
 qwidget_new(lua_State *L)
 {
   QWidget *parent = luaQ_optqobject<QWidget>(L, 1);
@@ -2092,9 +2092,9 @@ qwidget_render(lua_State *L)
     {
       QVariant v = luaQ_toqvariant(L, 2);
       if (v.userType() == qMetaTypeId<QPainter*>())
-        painter = qVariantValue<QPainter*>(v);
+        painter = v.value<QPainter*>();
       else if (v.userType() == qMetaTypeId<QPaintDevice*>())
-        device = qVariantValue<QPaintDevice*>(v);
+        device = v.value<QPaintDevice*>();
       else
         luaL_error(L, "Expecting QPainter* or QPaintDevice*");
     }
@@ -2121,7 +2121,7 @@ qwidget_render(lua_State *L)
 }
 
 static void
-name_2_attribute(lua_State *L, const char *name, 
+name_2_attribute(lua_State *L, const char *name,
                  Qt::WidgetAttribute &attrib)
 {
   static struct { const char *n; int a; } s[] = {
@@ -2138,7 +2138,6 @@ name_2_attribute(lua_State *L, const char *name,
     { "WA_UpdatesDisabled", Qt::WA_UpdatesDisabled },
     { "WA_Mapped", Qt::WA_Mapped },
     { "WA_MacNoClickThrough", Qt::WA_MacNoClickThrough },
-    { "WA_PaintOutsidePaintEvent", Qt::WA_PaintOutsidePaintEvent },
     { "WA_InputMethodEnabled", Qt::WA_InputMethodEnabled },
     { "WA_WState_Visible", Qt::WA_WState_Visible },
     { "WA_WState_Hidden", Qt::WA_WState_Hidden },
@@ -2242,7 +2241,7 @@ name_2_attribute(lua_State *L, const char *name,
 
 
 static void
-name_2_window_flag(lua_State *L, const char *name, 
+name_2_window_flag(lua_State *L, const char *name,
                    Qt::WindowFlags &flag, Qt::WindowFlags &mask)
 {
   static struct { const char *n; int f,m; } s[] = {
@@ -2341,7 +2340,7 @@ qwidget_test_window_flag(lua_State *L)
   return 1;
 }
 
-static int 
+static int
 qwidget_window(lua_State *L)
 {
   QWidget *w = luaQ_checkqobject<QWidget>(L, 1);
@@ -2390,7 +2389,7 @@ luaopen_libqtgui(lua_State *L)
   // load module 'qt'
   if (luaL_dostring(L, "require 'qt'"))
     lua_error(L);
-  if (QApplication::type() == QApplication::Tty)
+  if (!qobject_cast<QApplication *>(QCoreApplication::instance()))
     luaL_error(L, "Graphics have been disabled (running with -nographics)");
 
   // register metatypes
@@ -2416,15 +2415,15 @@ luaopen_libqtgui(lua_State *L)
      lua_pushcfunction(L, t ## _hook);\
      luaQ_pushmeta(L, &T::staticMetaObject);\
      lua_call(L, 1, 0)
-  
+
   // call hook for qvariants
 #define HOOK_QVARIANT(T, t) \
      lua_pushcfunction(L, t ## _hook);\
      luaQ_pushmeta(L, QMetaType::T);\
      lua_call(L, 1, 0)
-  
-  HOOK_QOBJECT(QAction, qaction);  
-  HOOK_QOBJECT(QApplication, qapplication);  
+
+  HOOK_QOBJECT(QAction, qaction);
+  HOOK_QOBJECT(QApplication, qapplication);
   HOOK_QVARIANT(QBrush, qbrush);
   HOOK_QVARIANT(QColor, qcolor);
   HOOK_QOBJECT(QColorDialog, qcolordialog);
@@ -2440,12 +2439,12 @@ luaopen_libqtgui(lua_State *L)
   HOOK_QOBJECT(QMenu, qmenu);
   HOOK_QOBJECT(QMenuBar, qmenubar);
   HOOK_QVARIANT(QPen, qpen);
-  HOOK_QOBJECT(QtLuaAction, qtluaaction);  
+  HOOK_QOBJECT(QtLuaAction, qtluaaction);
   HOOK_QVARIANT(QTransform, qtransform);
 #if HAVE_QTWEBKIT
   HOOK_QOBJECT(QWebView, qwebview);
 #endif
-  HOOK_QOBJECT(QWidget, qwidget);  
+  HOOK_QOBJECT(QWidget, qwidget);
 
   return 0;
 }

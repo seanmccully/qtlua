@@ -23,7 +23,7 @@
 #include <QPainter>
 #include <QPaintEvent>
 #include <QPointer>
-#include <QPrinter>
+#include <QtPrintSupport/QPrinter>
 #include <QPushButton>
 #include <QRegExp>
 #include <QSettings>
@@ -142,15 +142,15 @@ protected slots:
 
 
 QLuaTextEdit::FindDialog::FindDialog(QLuaTextEdit *editor)
-  : QDialog(editor), 
-    editor(editor), 
+  : QDialog(editor),
+    editor(editor),
     document(editor->document())
 {
   // ui
   ui.setupUi(this);
   connect(ui.findButton,SIGNAL(clicked()),this, SLOT(next()));
-  connect(ui.findEdit,SIGNAL(textChanged(QString)), this, SLOT(update())); 
-  connect(ui.findEdit,SIGNAL(returnPressed()), this, SLOT(next())); 
+  connect(ui.findEdit,SIGNAL(textChanged(QString)), this, SLOT(update()));
+  connect(ui.findEdit,SIGNAL(returnPressed()), this, SLOT(next()));
   new QShortcut(QKeySequence::FindNext, this, SLOT(findNext()));
   new QShortcut(QKeySequence::FindPrevious, this, SLOT(findPrevious()));
   findNextSCut = new QShortcut(QKeySequence::FindNext, editor);
@@ -186,7 +186,7 @@ QLuaTextEdit::FindDialog::prepare()
       QString s = cursor.selectedText();
       if (s.contains(QChar(0x2029)))
         s.truncate(s.indexOf(QChar(0x2029)));
-      if (! s.isEmpty()) 
+      if (! s.isEmpty())
         ui.findEdit->setText(s);
       ui.findEdit->selectAll();
       ui.findEdit->setFocus();
@@ -231,8 +231,8 @@ void
 QLuaTextEdit::FindDialog::next()
 {
   if (! find(ui.searchBackwardsBox->isChecked()))
-    QMessageBox::warning(this, tr("Find Warning"), 
-                         tr("Search text not found."));    
+    QMessageBox::warning(this, tr("Find Warning"),
+                         tr("Search text not found."));
 }
 
 
@@ -265,13 +265,13 @@ protected slots:
   void next();
   void replace();
   void replaceAll();
-  
+
 };
 
 
 QLuaTextEdit::ReplaceDialog::ReplaceDialog(QLuaTextEdit *editor)
-  : QDialog(editor), 
-    editor(editor), 
+  : QDialog(editor),
+    editor(editor),
     document(editor->document())
 {
   ui.setupUi(this);
@@ -279,8 +279,8 @@ QLuaTextEdit::ReplaceDialog::ReplaceDialog(QLuaTextEdit *editor)
   connect(ui.findButton,SIGNAL(clicked()),this, SLOT(next()));
   connect(ui.replaceButton,SIGNAL(clicked()),this, SLOT(replace()));
   connect(ui.replaceAllButton,SIGNAL(clicked()),this, SLOT(replaceAll()));
-  connect(ui.findEdit,SIGNAL(textChanged(QString)), this, SLOT(update())); 
-  connect(ui.findEdit,SIGNAL(returnPressed()), this, SLOT(next())); 
+  connect(ui.findEdit,SIGNAL(textChanged(QString)), this, SLOT(update()));
+  connect(ui.findEdit,SIGNAL(returnPressed()), this, SLOT(next()));
   new QShortcut(QKeySequence::FindNext, this, SLOT(findNext()));
   new QShortcut(QKeySequence::FindPrevious, this, SLOT(findPrevious()));
   QSettings s;
@@ -356,8 +356,8 @@ void
 QLuaTextEdit::ReplaceDialog::next()
 {
   if (! find(ui.searchBackwardsBox->isChecked()))
-    QMessageBox::warning(this, tr("Replace Warning"), 
-                         tr("Search text not found."));    
+    QMessageBox::warning(this, tr("Replace Warning"),
+                         tr("Search text not found."));
 }
 
 void
@@ -386,7 +386,7 @@ QLuaTextEdit::ReplaceDialog::replaceAll()
     n += 1;
   }
   update();
-  QMessageBox::warning(this, tr("Replace All"), 
+  QMessageBox::warning(this, tr("Replace All"),
                        tr("Replaced %n occurrence(s).", 0, n));
 }
 
@@ -416,7 +416,7 @@ QLuaTextEditModeFactory::~QLuaTextEditModeFactory()
 }
 
 
-QLuaTextEditModeFactory::QLuaTextEditModeFactory(const char *name, 
+QLuaTextEditModeFactory::QLuaTextEditModeFactory(const char *name,
                                                  const char *suffixes)
   : name_(name), suffixes_(suffixes), next(first), prev(0)
 {
@@ -429,14 +429,14 @@ QLuaTextEditModeFactory::QLuaTextEditModeFactory(const char *name,
 }
 
 
-QString 
+QString
 QLuaTextEditModeFactory::name()
 {
   return QLuaTextEditMode::tr(name_);
 }
 
 
-QString 
+QString
 QLuaTextEditModeFactory::filter()
 {
   QString patterns = "*." + suffixes().join(" *.");
@@ -444,14 +444,14 @@ QLuaTextEditModeFactory::filter()
 }
 
 
-QStringList 
+QStringList
 QLuaTextEditModeFactory::suffixes()
 {
   return QString(suffixes_).split(';');
 }
 
 
-QList<QLuaTextEditModeFactory*> 
+QList<QLuaTextEditModeFactory*>
 QLuaTextEditModeFactory::factories()
 {
   QList<QLuaTextEditModeFactory*> factories;
@@ -512,7 +512,7 @@ QLuaTextEdit::LineNumbers::updateRequest(const QRect &rect, int dy)
       r.setLeft(0);
       r.setWidth(width());
       QPointF offset = e->contentOffset();
-      for (QTextBlock block = e->firstVisibleBlock(); 
+      for (QTextBlock block = e->firstVisibleBlock();
            block.isValid(); block=block.next() )
         {
           if (! block.isVisible())
@@ -540,7 +540,7 @@ QLuaTextEdit::LineNumbers::paintEvent(QPaintEvent *event)
   QTextBlock sblock = e->textCursor().block();
   font.setWeight(QFont::Bold);
   painter.setFont(font);
-  for (QTextBlock block = e->firstVisibleBlock(); 
+  for (QTextBlock block = e->firstVisibleBlock();
        block.isValid(); block=block.next() )
     {
       int n = block.blockNumber();
@@ -607,15 +607,15 @@ QLuaTextEdit::Private::~Private()
 
 
 QLuaTextEdit::Private::Private(QLuaTextEdit *q)
-  : QObject(q), 
+  : QObject(q),
     q(q),
     lineNumbers(0),
     showLineNumbers(false),
-    autoComplete(true), 
-    autoIndent(true), 
-    autoHighlight(true), 
+    autoComplete(true),
+    autoIndent(true),
+    autoHighlight(true),
     autoMatch(true),
-    tabExpand(false), 
+    tabExpand(false),
     tabSize(8),
     sizeInChars(QSize(80,25)),
     layoutScheduled(false)
@@ -635,7 +635,7 @@ QLuaTextEdit::Private::filterText(QString data)
   for (int i=0; i<data.size(); i++)
     {
       QChar c = data.at(i);
-      int ic = c.toAscii();
+      int ic = c.toLatin1();
       if (ic == '\t')
         {
           int tpos = (int)((pos + tabSize) / tabSize) * tabSize;
@@ -676,7 +676,7 @@ QLuaTextEdit::Private::expandTab()
 }
 
 
-void 
+void
 QLuaTextEdit::Private::updateMatch()
 {
   bool b = false;;
@@ -688,7 +688,7 @@ QLuaTextEdit::Private::updateMatch()
 }
 
 
-void 
+void
 QLuaTextEdit::Private::updateHighlight()
 {
   delete highlighter;
@@ -699,10 +699,10 @@ QLuaTextEdit::Private::updateHighlight()
 }
 
 
-bool 
+bool
 QLuaTextEdit::Private::eventFilter(QObject *watched, QEvent *event)
 {
-  if (event->type() == QEvent::Resize 
+  if (event->type() == QEvent::Resize
       && watched == q->viewport() )
     scheduleLayout();
   return false;
@@ -754,56 +754,56 @@ QLuaTextEdit::QLuaTextEdit(QWidget *parent)
 }
 
 
-bool 
+bool
 QLuaTextEdit::showLineNumbers() const
 {
   return d->showLineNumbers;
 }
 
 
-bool 
+bool
 QLuaTextEdit::autoComplete() const
 {
   return d->autoComplete;
 }
 
 
-bool 
+bool
 QLuaTextEdit::autoIndent() const
 {
   return d->autoIndent;
 }
 
 
-bool 
+bool
 QLuaTextEdit::autoHighlight() const
 {
   return d->autoHighlight;
 }
 
 
-bool 
+bool
 QLuaTextEdit::autoMatch() const
 {
   return d->autoMatch;
 }
 
 
-bool 
+bool
 QLuaTextEdit::tabExpand() const
 {
   return d->tabExpand;
 }
 
 
-int 
+int
 QLuaTextEdit::tabSize() const
 {
   return d->tabSize;
 }
 
 
-QSize 
+QSize
 QLuaTextEdit::sizeInChars() const
 {
   return d->sizeInChars;
@@ -870,7 +870,7 @@ QLuaTextEdit::setAutoMatch(bool b)
 }
 
 
-void 
+void
 QLuaTextEdit::setTabExpand(bool b)
 {
   if (d->tabExpand == b)
@@ -880,7 +880,7 @@ QLuaTextEdit::setTabExpand(bool b)
 }
 
 
-void 
+void
 QLuaTextEdit::setTabSize(int s)
 {
   if (s > 1 && s < 48 && s != d->tabSize)
@@ -892,7 +892,7 @@ QLuaTextEdit::setTabSize(int s)
 }
 
 
-void 
+void
 QLuaTextEdit::setSizeInChars(QSize size)
 {
   d->sizeInChars = size;
@@ -914,7 +914,7 @@ QLuaTextEdit::setEditorMode(QLuaTextEditModeFactory *factory)
 }
 
 
-bool 
+bool
 QLuaTextEdit::setEditorMode(QString suffix)
 {
   QLuaTextEditModeFactory *factory = 0;
@@ -933,7 +933,7 @@ QLuaTextEdit::setEditorMode(QString suffix)
 }
 
 
-bool 
+bool
 QLuaTextEdit::readFile(QFile &file)
 {
   if (file.open(QIODevice::ReadOnly))
@@ -953,7 +953,7 @@ QLuaTextEdit::readFile(QFile &file)
 }
 
 
-bool 
+bool
 QLuaTextEdit::readFile(QString fname)
 {
   QFile file(fname);
@@ -961,7 +961,7 @@ QLuaTextEdit::readFile(QString fname)
 }
 
 
-bool 
+bool
 QLuaTextEdit::writeFile(QFile &file)
 {
   if (file.open(QIODevice::WriteOnly))
@@ -977,7 +977,7 @@ QLuaTextEdit::writeFile(QFile &file)
 }
 
 
-bool 
+bool
 QLuaTextEdit::writeFile(QString fname)
 {
   QFile file(fname);
@@ -985,7 +985,7 @@ QLuaTextEdit::writeFile(QString fname)
 }
 
 
-void 
+void
 QLuaTextEdit::showLine(int lineno)
 {
   QTextDocument *d = document();
@@ -1041,8 +1041,8 @@ QLuaTextEdit::print(QPrinter *printer)
         }
     }
   // make sure we wrap lines
-  for (QTextBlock dstBlock = doc->begin(); 
-       dstBlock.isValid(); 
+  for (QTextBlock dstBlock = doc->begin();
+       dstBlock.isValid();
        dstBlock = dstBlock.next())
     {
       QTextLayout *d = dstBlock.layout();
@@ -1078,7 +1078,7 @@ QLuaTextEdit::print(QPrinter *printer)
   QPrinter::PrinterState state = printer->printerState();
   for (int i = 0; i < docCopies; ++i)
     for (int page = fromPage; page != toPage + incPage; page += incPage)
-      for (int j = 0; j < pageCopies; ++j) 
+      for (int j = 0; j < pageCopies; ++j)
         {
           state = printer->printerState();
           if (state != QPrinter::Aborted && state != QPrinter::Error)
@@ -1107,9 +1107,9 @@ QLuaTextEdit::print(QPrinter *printer)
               QString f = m.elidedText(title,Qt::ElideLeft, w);
               p.translate(top);
               p.fillRect(header, QBrush(Qt::lightGray));
-              p.drawText(header, Qt::AlignRight, 
+              p.drawText(header, Qt::AlignRight,
                          QString("%1 ").arg(f));
-              p.drawText(header, Qt::AlignLeft, 
+              p.drawText(header, Qt::AlignLeft,
                          QString(" Page %1").arg(page));
               // finish
               p.restore();
@@ -1121,7 +1121,7 @@ QLuaTextEdit::print(QPrinter *printer)
 }
 
 
-QSize 
+QSize
 QLuaTextEdit::sizeHint() const
 {
   QFontMetrics fontMetrics(font());
@@ -1179,7 +1179,7 @@ QLuaTextEdit::keyPressEvent(QKeyEvent *event)
 }
 
 
-int 
+int
 QLuaTextEdit::indentAt(int pos)
 {
   QTextBlock block = document()->findBlock(pos);
@@ -1187,7 +1187,7 @@ QLuaTextEdit::indentAt(int pos)
 }
 
 
-int 
+int
 QLuaTextEdit::indentAt(int pos, QTextBlock block)
 {
   int c = 0;
@@ -1199,7 +1199,7 @@ QLuaTextEdit::indentAt(int pos, QTextBlock block)
       int ss = text.size();
       int e = pos-block.position();
       for (int i=0; i<e && i<ss; i++)
-        if (text[i].toAscii() == '\t') 
+        if (text[i].toLatin1() == '\t')
           c = ((int)(c / ts) + 1) * ts;
         else
           c = c + 1;
@@ -1208,7 +1208,7 @@ QLuaTextEdit::indentAt(int pos, QTextBlock block)
 }
 
 
-int 
+int
 QLuaTextEdit::indentAfter(int pos, int dpos)
 {
   QTextBlock block = document()->findBlock(pos);
@@ -1237,7 +1237,7 @@ QLuaTextEdit::getBlockIndent(QTextBlock block)
 int
 QLuaTextEdit::getBlockIndent(QTextBlock block, int &indent)
 {
-  
+
   Q_ASSERT(block.isValid());
   indent = -1;
   QString text = block.text();
@@ -1246,7 +1246,7 @@ QLuaTextEdit::getBlockIndent(QTextBlock block, int &indent)
   int i;
   indent = 0;
   for (i=0; i<ss && text[i].isSpace(); i++)
-    indent += (text[i].toAscii() == '\t') ? ts : 1;
+    indent += (text[i].toLatin1() == '\t') ? ts : 1;
   if (i >= ss)
     indent = -1;
   return block.position() + i;
@@ -1310,7 +1310,7 @@ QLuaTextEdit::prepareDialog(QDialog *d)
 }
 
 
-QRectF 
+QRectF
 QLuaTextEdit::blockBoundingGeometry(const QTextBlock &block) const
 {
   // just to make this function public!
@@ -1330,7 +1330,7 @@ typedef QMap<QString,QTextCharFormat> Formats;
 Q_GLOBAL_STATIC(Formats, formats);
 
 
-QTextCharFormat 
+QTextCharFormat
 QLuaTextEdit::Private::defaultFormat(QString key)
 {
   QTextCharFormat fmt;
@@ -1361,7 +1361,7 @@ QLuaTextEdit::Private::defaultFormat(QString key)
 }
 
 
-QTextCharFormat 
+QTextCharFormat
 QLuaTextEdit::format(QString key)
 {
   // quick cache
@@ -1403,7 +1403,7 @@ QLuaTextEdit::setFormat(QString key, QTextCharFormat fmt)
   (*formats())[key] = fmt;
 }
 
-void 
+void
 QLuaTextEdit::Private::saveFormats()
 {
   QSettings s;
@@ -1427,7 +1427,7 @@ QLuaTextEdit::Private::saveFormats()
 }
 
 
-void 
+void
 QLuaTextEdit::reHighlight()
 {
   formats()->clear();

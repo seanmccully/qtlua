@@ -38,7 +38,7 @@ namespace {
     LexString,
     LexChar,
     LexComment,
-    
+
     LexCppMask = 0xfff00,
     LexCppStart = 0x1000,
     LexCpp = 0x2000,
@@ -78,39 +78,39 @@ namespace {
     LastTypeAnnunciator = Kunion
   };
 
-  struct Keywords { 
-    const char *text; 
-    TokenType type; 
+  struct Keywords {
+    const char *text;
+    TokenType type;
   };
-  
+
   Keywords skeywords[] = {
-    {"bool", Kbool}, {"char", Kchar}, {"double", Kdouble}, 
+    {"bool", Kbool}, {"char", Kchar}, {"double", Kdouble},
     {"float", Kfloat}, {"int", Kint},
-    {"long", Klong}, {"short", Kshort}, {"void", Kvoid}, 
+    {"long", Klong}, {"short", Kshort}, {"void", Kvoid},
     {"wchar_t", Kwchar_t},
-    {"signed", Ksigned}, {"const", Kconst}, 
+    {"signed", Ksigned}, {"const", Kconst},
     {"unsigned", Kunsigned}, {"volatile", Kvolatile}, {"auto", Kauto},
-    {"explicit", Kexplicit}, {"mutable", Kmutable}, 
+    {"explicit", Kexplicit}, {"mutable", Kmutable},
     {"extern", Kextern}, {"static", Kstatic}, {"register", Kregister},
     {"inline", Kinline}, {"template", Ktemplate}, {"virtual", Kvirtual},
-    {"class", Kclass}, {"enum", Kenum}, {"namespace", Knamespace}, 
-    {"typedef", Ktypedef}, {"friend", Kfriend}, {"struct", Kstruct}, 
-    {"union", Kunion}, {"const_cast", Kconst_cast}, {"delete", Kdelete}, 
-    {"dynamic_cast", Kdynamic_cast}, {"false", Kfalse}, {"new", Knew}, 
-    {"operator", Koperator}, {"static_cast", Kstatic_cast}, 
+    {"class", Kclass}, {"enum", Kenum}, {"namespace", Knamespace},
+    {"typedef", Ktypedef}, {"friend", Kfriend}, {"struct", Kstruct},
+    {"union", Kunion}, {"const_cast", Kconst_cast}, {"delete", Kdelete},
+    {"dynamic_cast", Kdynamic_cast}, {"false", Kfalse}, {"new", Knew},
+    {"operator", Koperator}, {"static_cast", Kstatic_cast},
     {"reinterpret_cast", Kreinterpret_cast},
-    {"return", Kreturn}, {"sizeof", Ksizeof}, {"true", Ktrue}, 
+    {"return", Kreturn}, {"sizeof", Ksizeof}, {"true", Ktrue},
     {"this", Kthis}, {"throw", Kthrow},
     {"typeid", Ktypeid}, {"typename", Ktypename}, {"using", Kusing},
-    {"asm", Kasm}, {"break", Kbreak}, {"case", Kcase}, 
+    {"asm", Kasm}, {"break", Kbreak}, {"case", Kcase},
     {"catch", Kcatch}, {"continue", Kcontinue}, {"default", Kdefault},
-    {"do", Kdo}, {"else", Kelse}, {"export", Kexport}, 
+    {"do", Kdo}, {"else", Kelse}, {"export", Kexport},
     {"for", Kfor}, {"goto", Kgoto}, {"if", Kif},
     {"switch", Kswitch}, {"try", Ktry}, {"while", Kwhile},
     {"private", Kprivate}, {"protected", Kprotected}, {"public", Kpublic},
-    {";", SemiColon}, {":", Colon}, {"::", DoubleColon}, 
-    {"(", LParen}, {")", RParen}, {"[", LBracket}, 
-    {"]", RBracket}, {"{", LBrace}, {"}", RBrace}, 
+    {";", SemiColon}, {":", Colon}, {"::", DoubleColon},
+    {"(", LParen}, {")", RParen}, {"[", LBracket},
+    {"]", RBracket}, {"{", LBrace}, {"}", RBrace},
     {0}
   };
 
@@ -126,7 +126,7 @@ namespace {
     int indent() const;
     PNode next() const;
   };
-  
+
   struct Node : public QSharedData {
     Node(TokenType t, int p, int l, PNode n)
       : next(n), type(t),pos(p),len(l),indent(-1) {}
@@ -138,21 +138,21 @@ namespace {
     int len;
     int indent;
   };
-  
+
   PNode::PNode()
     : QSharedDataPointer<Node>() {}
-  
+
   PNode::PNode(TokenType t, int p, int l, PNode n)
     : QSharedDataPointer<Node>(new Node(t,p,l,n)) {}
-  
+
   PNode::PNode(TokenType t, int p, int l, int i, PNode n)
     : QSharedDataPointer<Node>(new Node(t,p,l,i,n)) {}
 
-  inline TokenType PNode::type() const { 
+  inline TokenType PNode::type() const {
     const Node *n = constData();
-    return (n) ? n->type : Main; 
+    return (n) ? n->type : Main;
   }
-  
+
   inline int PNode::pos() const {
     const Node *n = constData();
     return (n) ? n->pos : 0;
@@ -162,17 +162,17 @@ namespace {
     const Node *n = constData();
     return (n) ? n->len : 0;
   }
-  
+
   inline int PNode::indent() const {
     const Node *n = constData();
     return (n) ? n->indent : 0;
   }
-  
+
   inline PNode PNode::next() const {
     const Node *n = constData();
     return (n) ? n->next : PNode();
   }
-    
+
   struct UserData : public QLuaModeUserData
   {
     // lexical state
@@ -205,12 +205,12 @@ public:
   virtual bool supportsIndent() { return false; }
   void gotLine(UserData *d, int pos, int len, QString);
   void gotToken(UserData *d, int pos, int len, QString, TokenType);
-  virtual void parseBlock(int pos, const QTextBlock &block, 
-                          const QLuaModeUserData *idata, 
+  virtual void parseBlock(int pos, const QTextBlock &block,
+                          const QLuaModeUserData *idata,
                           QLuaModeUserData *&odata );
 private:
   QMap<QString,TokenType> keywords;
-  QRegExp reNum, reId, reType, reSym; 
+  QRegExp reNum, reId, reType, reSym;
   int bi;
 };
 
@@ -234,9 +234,9 @@ QLuaModeC::QLuaModeC(QLuaTextEditModeFactory *f, QLuaTextEdit *e)
 }
 
 
-void 
-QLuaModeC::parseBlock(int pos, const QTextBlock &block, 
-                        const QLuaModeUserData *idata, 
+void
+QLuaModeC::parseBlock(int pos, const QTextBlock &block,
+                        const QLuaModeUserData *idata,
                         QLuaModeUserData *&odata )
 {
   QString text = block.text();
@@ -252,7 +252,7 @@ QLuaModeC::parseBlock(int pos, const QTextBlock &block,
   // output state
   odata = data;
 }
-  
+
 
 // ========================================
 // QLUAMODELUA - LEXICAL ANALYSIS
@@ -272,7 +272,7 @@ QLuaModeC::gotLine(UserData *d, int pos, int len, QString s)
   int slen = s.size();
   while (p < len)
     {
-      int c = (p < slen) ? s[p].toAscii() : '\n';
+      int c = (p < slen) ? s[p].toLatin1() : '\n';
       switch(state)
         {
         case LexStart:
@@ -283,7 +283,7 @@ QLuaModeC::gotLine(UserData *d, int pos, int len, QString s)
             setIndentOverlay(pos+p+1, e->indentAfter(pos+p+1,+2));
             p += 1;
           }
-          continue; 
+          continue;
         default:
         case LexDefault:
           if ((cppstate) && (c == '\\') && (p+1 == slen)) {
@@ -296,7 +296,7 @@ QLuaModeC::gotLine(UserData *d, int pos, int len, QString s)
             break;
           } else if (c=='\'') {
             setIndentOverlay(pos+p+1, -1);
-            r = p; state = LexChar; 
+            r = p; state = LexChar;
           } else if (c=='\"') {
             setIndentOverlay(pos+p+1, -1);
             r = p; state = LexString;
@@ -337,7 +337,7 @@ QLuaModeC::gotLine(UserData *d, int pos, int len, QString s)
             int l = reSym.matchedLength();
             QString m = s.mid(p,l);
             TokenType type = Other;
-            if (keywords.contains(m)) 
+            if (keywords.contains(m))
               type = keywords[m];
             if (! cppstate)
               gotToken(d, pos+p, l, m, type);
@@ -345,7 +345,7 @@ QLuaModeC::gotLine(UserData *d, int pos, int len, QString s)
           }
           break;
         case LexString:
-          if (c == '\"' || c == '\n' || c == '\r') { 
+          if (c == '\"' || c == '\n' || c == '\r') {
             setFormat(pos+r,p-r+1,"string");
             setIndentOverlay(pos+p+1);
             if (!cppstate)
@@ -355,7 +355,7 @@ QLuaModeC::gotLine(UserData *d, int pos, int len, QString s)
             p += 1;
           break;
         case LexChar:
-          if (c == '\'' || c == '\n' || c == '\r') { 
+          if (c == '\'' || c == '\n' || c == '\r') {
             setFormat(pos+r,p-r+1,"string");
             setIndentOverlay(pos+p+1);
             if (!cppstate)
@@ -427,7 +427,7 @@ QDebug operator<<(QDebug d, const TokenType &t)
 
 
 void
-QLuaModeC::gotToken(UserData *d, int pos, int len, 
+QLuaModeC::gotToken(UserData *d, int pos, int len,
                       QString s, TokenType ltype)
 {
 #if DEBUG
@@ -444,7 +444,7 @@ QLuaModeC::gotToken(UserData *d, int pos, int len,
 // FACTORY
 
 
-static QLuaModeFactory<QLuaModeC> textModeFactory("C", 
+static QLuaModeFactory<QLuaModeC> textModeFactory("C",
                                                   "c;h;cpp;hpp;c++;h++;C;H");
 
 

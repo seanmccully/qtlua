@@ -21,6 +21,7 @@
 #include <QTextEdit>
 #include <QVariant>
 #include <QWidget>
+#include <QtPrintSupport/QPrinter>
 
 class QLuaEditor;
 class QLuaTextEdit;
@@ -54,7 +55,7 @@ public:
   bool tabExpand() const;
   int tabSize() const;
   QSize sizeInChars() const;
-  
+
   int indentAt(int pos);
   int indentAt(int pos, QTextBlock block);
   int indentAfter(int pos, int dpos=0);
@@ -64,17 +65,17 @@ public:
   bool readFile(QFile &file);
   bool writeFile(QFile &file);
   bool print(QPrinter *printer);
-  
+
   Q_INVOKABLE QLuaTextEditMode *editorMode() const;
   Q_INVOKABLE virtual QDialog *makeFindDialog();
   Q_INVOKABLE virtual QDialog *makeReplaceDialog();
   Q_INVOKABLE virtual QDialog *makeGotoDialog();
   Q_INVOKABLE virtual void prepareDialog(QDialog *dialog);
-  
+
   static QTextCharFormat format(QString key);
   static void setFormat(QString key, QTextCharFormat format);
   QRectF blockBoundingGeometry(const QTextBlock &block) const;
-  
+
 public slots:
   void setShowLineNumbers(bool b);
   void setAutoComplete(bool b);
@@ -84,7 +85,7 @@ public slots:
   void setTabExpand(bool b);
   void setTabSize(int s);
   void setSizeInChars(QSize size);
-  bool setEditorMode(QLuaTextEditModeFactory *modeFactory = 0); 
+  bool setEditorMode(QLuaTextEditModeFactory *modeFactory = 0);
   bool setEditorMode(QString suffix);
   bool readFile(QString fname);
   bool writeFile(QString fname);
@@ -97,7 +98,7 @@ signals:
 protected:
   virtual QSize sizeHint() const;
   virtual void keyPressEvent(QKeyEvent *event);
-  
+
 public:
   class Private;
   class GotoDialog;
@@ -112,7 +113,7 @@ private:
 
 
 
-// Text editor language support 
+// Text editor language support
 
 
 class QTIDE_API QLuaTextEditModeFactory

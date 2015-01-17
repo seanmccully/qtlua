@@ -14,7 +14,7 @@
 
 #include <QApplication>
 #include <QMessageBox>
-#include <QPrinter>
+#include <QtPrintSupport/QPrintDialog>
 
 
 #include <stdlib.h>
@@ -24,7 +24,7 @@
 // QLUAEDITOR
 
 
-int 
+int
 qluaide_new(lua_State *L)
 {
   luaQ_pushqt(L, QLuaIde::instance());
@@ -47,7 +47,7 @@ static luaL_Reg qluaide_lib[] = {
 };
 
 
-static int qluaide_hook(lua_State *L) 
+static int qluaide_hook(lua_State *L)
 {
   lua_getfield(L, -1, "__metatable");
   luaQ_register(L, qluaide_lib, QCoreApplication::instance());
@@ -66,11 +66,11 @@ static int qluaide_hook(lua_State *L)
 
 LUA_EXTERNC QTIDE_API int
 luaopen_libqtide(lua_State *L)
-{ 
+{
   // load module 'qt'
   if (luaL_dostring(L, "require 'qt'"))
     lua_error(L);
-  if (QApplication::type() == QApplication::Tty)
+  if (!qobject_cast<QApplication *>(QCoreApplication::instance()))
     luaL_error(L, "Graphics have been disabled (running with -nographics)");
   // register metatypes
   qRegisterMetaType<QPrinter*>("QPrinter*");

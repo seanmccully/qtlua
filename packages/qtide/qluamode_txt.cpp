@@ -22,21 +22,21 @@
 namespace {
 
   struct Match;
-  
+
   typedef QSharedDataPointer<Match> PMatch;
-  
+
   struct Match : public QSharedData
   {
     PMatch next;
     char type;
     int pos;
   };
-  
+
   struct UserData : public QLuaModeUserData
   {
     PMatch stack;
   };
-  
+
 }
 
 
@@ -54,8 +54,8 @@ class QLuaModeText : public QLuaMode
 public:
   QLuaModeText(QLuaTextEditModeFactory *f, QLuaTextEdit *e);
   virtual bool doEnter();
-  virtual void parseBlock(int pos, const QTextBlock &block, 
-                          const QLuaModeUserData *idata, 
+  virtual void parseBlock(int pos, const QTextBlock &block,
+                          const QLuaModeUserData *idata,
                           QLuaModeUserData *&odata );
 private:
   QRegExp reHighlight;
@@ -63,7 +63,7 @@ private:
 
 
 QLuaModeText::QLuaModeText(QLuaTextEditModeFactory *f, QLuaTextEdit *e)
-  : QLuaMode(f,e), 
+  : QLuaMode(f,e),
     reHighlight("^[|>]")
 {
 }
@@ -77,23 +77,23 @@ QLuaModeText::doEnter()
 }
 
 
-void 
-QLuaModeText::parseBlock(int pos, const QTextBlock &block, 
-                         const QLuaModeUserData *idata, 
+void
+QLuaModeText::parseBlock(int pos, const QTextBlock &block,
+                         const QLuaModeUserData *idata,
                          QLuaModeUserData *&odata )
 {
   int len = block.length();
   QString text = block.text();
   UserData *data = new UserData;
-  
+
   // input state
   if (idata)
     *data = *static_cast<const UserData*>(idata);
-  
+
   // highlight
   if (text.contains(reHighlight))
     setFormat(pos, len, "quote");
-  
+
   // indentation
   int indent;
   int cpos = e->getBlockIndent(block, indent);
@@ -101,11 +101,11 @@ QLuaModeText::parseBlock(int pos, const QTextBlock &block,
     setIndent(cpos+1, indent);
   else
     setIndent(block.position()+1, -1);
-  
+
   // matches
   for (int i=0; i<len; i++)
     {
-      char ic = text[i].toAscii();
+      char ic = text[i].toLatin1();
       if (ic=='(' || ic=='[' || ic=='{')
         {
           PMatch m(new Match);
@@ -123,7 +123,7 @@ QLuaModeText::parseBlock(int pos, const QTextBlock &block,
               if (m->type == strchr("()[]{}", ic)[-1])
                 setRightMatch(pos + i, 1, m->pos, 1);
               else
-                setErrorMatch(pos + i, 1, m->pos, 1);                
+                setErrorMatch(pos + i, 1, m->pos, 1);
               setBalance(m->pos, pos+i+1, !m->next);
               data->stack = m->next;
             }
@@ -133,7 +133,7 @@ QLuaModeText::parseBlock(int pos, const QTextBlock &block,
   // output state
   odata = data;
 }
-  
+
 
 
 

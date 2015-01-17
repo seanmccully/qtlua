@@ -4,13 +4,14 @@
 #include "qtluaprinter.h"
 
 #include <QDialog>
-#include <QPrintDialog>
+#include <QtPrintSupport/QPrinter>
+#include <QtPrintSupport/QPrintDialog>
 
 
 
-struct Option 
+struct Option
 {
-  const char *name; 
+  const char *name;
   int value;
 };
 
@@ -24,7 +25,7 @@ static Option pageSizes[] = {
   {0} };
 
 static Option outputFormats[] = {
-  F(NativeFormat), F(PdfFormat), F(PostScriptFormat), 
+  F(NativeFormat), F(PdfFormat),
   {0} };
 
 static Option printerStates[] = {
@@ -52,7 +53,7 @@ name_to_value(const char *name, Option *opts)
 }
 
 
-QString 
+QString
 QtLuaPrinter::pageSize() const
 {
 #if QT_VERSION >= 0x40400
@@ -60,11 +61,11 @@ QtLuaPrinter::pageSize() const
 #else
   int s = (int)QPrinter::pageSize();
 #endif
-  return QString::fromAscii(value_to_name(s, pageSizes));
+  return QString::fromLatin1(value_to_name(s, pageSizes));
 }
 
 
-void 
+void
 QtLuaPrinter::setPageSize(QString r)
 {
   int s = name_to_value(r.toLocal8Bit().constData(), pageSizes);
@@ -74,42 +75,42 @@ QtLuaPrinter::setPageSize(QString r)
       if (s != QPrinter::Custom)
         QPrinter::setPageSize(QPrinter::PageSize(s));
 #if QT_VERSION >= 0x40400
-      else 
+      else
         custom = true;
       if (custom && papSize.isValid())
-        QPrinter::setPaperSize(papSize, Point); 
+        QPrinter::setPaperSize(papSize, Point);
 #endif
     }
 }
 
 
-QSizeF 
-QtLuaPrinter::paperSize() const 
+QSizeF
+QtLuaPrinter::paperSize() const
 {
   return papSize;
 }
 
 
-void 
-QtLuaPrinter::setPaperSize(QSizeF s) 
-{ 
-  papSize = s; 
+void
+QtLuaPrinter::setPaperSize(QSizeF s)
+{
+  papSize = s;
 #if QT_VERSION >= 0x40400
   if (custom && papSize.isValid())
-    QPrinter::setPaperSize(papSize, Point); 
+    QPrinter::setPaperSize(papSize, Point);
 #endif
 }
 
 
-QString 
+QString
 QtLuaPrinter::outputFormat() const
 {
   int s = (int) QPrinter::outputFormat();
-  return QString::fromAscii(value_to_name(s, outputFormats));
+  return QString::fromLatin1(value_to_name(s, outputFormats));
 }
 
 
-void 
+void
 QtLuaPrinter::setOutputFormat(QString r)
 {
   int s = name_to_value(r.toLocal8Bit().constData(), outputFormats);
@@ -118,11 +119,11 @@ QtLuaPrinter::setOutputFormat(QString r)
 }
 
 
-QString 
+QString
 QtLuaPrinter::printerState() const
 {
   int s = (int) QPrinter::printerState();
-  return QString::fromAscii(value_to_name(s, printerStates));
+  return QString::fromLatin1(value_to_name(s, printerStates));
 }
 
 

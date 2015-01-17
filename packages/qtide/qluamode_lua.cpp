@@ -36,9 +36,9 @@ namespace {
     Other, Identifier, Number, String,
     // tokens
     SemiColon, ThreeDots, Comma, Dot, Colon,
-    LParen, RParen, LBracket, RBracket, LBrace, RBrace, 
+    LParen, RParen, LBracket, RBracket, LBrace, RBrace,
     // keywords
-    Kand, Kfalse, Kfunction, Knil, 
+    Kand, Kfalse, Kfunction, Knil,
     Knot, Kor, Ktrue, Kin,
     // keywords that kill statements
     Kbreak, Kdo, Kelse, Kelseif, Kend, Kfor,
@@ -55,11 +55,11 @@ namespace {
     FirstStrictKeyword = Kbreak,
   };
 
-  struct Keywords { 
-    const char *text; 
-    TokenType type; 
+  struct Keywords {
+    const char *text;
+    TokenType type;
   };
-  
+
   Keywords skeywords[] = {
     {"and", Kand}, {"break", Kbreak}, {"do", Kdo}, {"else", Kelse},
     {"elseif", Kelseif}, {"end", Kend}, {"false", Kfalse}, {"for", Kfor},
@@ -67,10 +67,10 @@ namespace {
     {"nil", Knil}, {"not", Knot}, {"or", Kor}, {"repeat", Krepeat},
     {"return", Kreturn}, {"then", Kthen}, {"true", Ktrue},
     {"until", Kuntil}, {"while", Kwhile},
-    {";", SemiColon}, {"...", ThreeDots}, {",", Comma}, 
-    {".", Dot}, {":", Colon}, 
-    {"(", LParen}, {")", RParen}, {"[", LBracket}, 
-    {"]", RBracket}, {"{", LBrace}, {"}", RBrace}, 
+    {";", SemiColon}, {"...", ThreeDots}, {",", Comma},
+    {".", Dot}, {":", Colon},
+    {"(", LParen}, {")", RParen}, {"[", LBracket},
+    {"]", RBracket}, {"{", LBrace}, {"}", RBrace},
     {0}
   };
 
@@ -86,7 +86,7 @@ namespace {
     int indent() const;
     PNode next() const;
   };
-  
+
   struct Node : public QSharedData {
     Node(TokenType t, int p, int l, PNode n)
       : next(n), type(t),pos(p),len(l),indent(-1) {}
@@ -98,21 +98,21 @@ namespace {
     int len;
     int indent;
   };
-  
+
   PNode::PNode()
     : QSharedDataPointer<Node>() {}
-  
+
   PNode::PNode(TokenType t, int p, int l, PNode n)
     : QSharedDataPointer<Node>(new Node(t,p,l,n)) {}
-  
+
   PNode::PNode(TokenType t, int p, int l, int i, PNode n)
     : QSharedDataPointer<Node>(new Node(t,p,l,i,n)) {}
 
-  inline TokenType PNode::type() const { 
+  inline TokenType PNode::type() const {
     const Node *n = constData();
-    return (n) ? n->type : Chunk; 
+    return (n) ? n->type : Chunk;
   }
-  
+
   inline int PNode::pos() const {
     const Node *n = constData();
     return (n) ? n->pos : 0;
@@ -122,17 +122,17 @@ namespace {
     const Node *n = constData();
     return (n) ? n->len : 0;
   }
-  
+
   inline int PNode::indent() const {
     const Node *n = constData();
     return (n) ? n->indent : 0;
   }
-  
+
   inline PNode PNode::next() const {
     const Node *n = constData();
     return (n) ? n->next : PNode();
   }
-    
+
   struct UserData : public QLuaModeUserData
   {
     // lexical state
@@ -165,8 +165,8 @@ public:
   void gotToken(UserData *d, int pos, int len, QString, TokenType);
   bool supportsComplete() { return true; }
   bool supportsLua() { return true; }
-  virtual void parseBlock(int pos, const QTextBlock &block, 
-                          const QLuaModeUserData *idata, 
+  virtual void parseBlock(int pos, const QTextBlock &block,
+                          const QLuaModeUserData *idata,
                           QLuaModeUserData *&odata );
   QStringList computeFileCompletions(QString s, bool escape, QString &stem);
   QStringList computeSymbolCompletions(QString s, QString &stem);
@@ -195,9 +195,9 @@ QLuaModeLua::QLuaModeLua(QLuaTextEditModeFactory *f, QLuaTextEdit *e)
 }
 
 
-void 
-QLuaModeLua::parseBlock(int pos, const QTextBlock &block, 
-                        const QLuaModeUserData *idata, 
+void
+QLuaModeLua::parseBlock(int pos, const QTextBlock &block,
+                        const QLuaModeUserData *idata,
                         QLuaModeUserData *&odata )
 {
   QString text = block.text();
@@ -216,7 +216,7 @@ QLuaModeLua::parseBlock(int pos, const QTextBlock &block,
   // output state
   odata = data;
 }
-  
+
 
 // ========================================
 // QLUAMODELUA - LEXICAL ANALYSIS
@@ -236,24 +236,24 @@ QLuaModeLua::gotLine(UserData *d, int pos, int len, QString s)
   int slen = s.size();
   while (p < len)
     {
-      int c = (p < slen) ? s[p].toAscii() : '\n';
+      int c = (p < slen) ? s[p].toLatin1() : '\n';
       switch(state)
         {
         case 0:
           state = -1;
-          if (c == '#') { 
-            r = p; n = 0; state = -4; 
+          if (c == '#') {
+            r = p; n = 0; state = -4;
           }
-          continue; 
+          continue;
         default:
         case -1:
           if (isspace(c)) {
             break;
           } if (isalpha(c) || c=='_') {
-            r = p; state = -2; 
+            r = p; state = -2;
           } else if (c=='\'') {
             setIndentOverlay(pos+p+1, -1);
-            r = p; n = -c; state = -3; 
+            r = p; n = -c; state = -3;
           } else if (c=='\"') {
             setIndentOverlay(pos+p+1, -1);
             r = p; n = -c; state = -3;
@@ -270,7 +270,7 @@ QLuaModeLua::gotLine(UserData *d, int pos, int len, QString s)
               gotToken(d, pos+p, 1, QString(), LBracket);
             }
           } else if (c=='-' && p+1 < slen && s[p+1]=='-') {
-            r = p; n = 0; state = -4; 
+            r = p; n = 0; state = -4;
             if (p+2 < slen && s[p+2]=='[') {
               int  t = p + 3;
               while (t < slen && s[t] == '=')
@@ -291,7 +291,7 @@ QLuaModeLua::gotLine(UserData *d, int pos, int len, QString s)
           } else if (reSym.indexIn(s,p,QRegExp::CaretAtOffset)>=0) {
             int l = reSym.matchedLength();
             QString m = s.mid(p,l);
-            if (keywords.contains(m)) 
+            if (keywords.contains(m))
               gotToken(d, pos+p, l, QString(), keywords[m]);
             else
               gotToken(d, pos+p, l, m, Other);
@@ -304,7 +304,7 @@ QLuaModeLua::gotLine(UserData *d, int pos, int len, QString s)
             if (keywords.contains(m)) {
               setFormat(pos+r, p-r, "keyword");
               gotToken(d, pos+r, p-r, QString(), keywords[m]);
-            } else 
+            } else
               gotToken(d, pos+r, p-r, m, Identifier);
             state = -1; continue;
           }
@@ -375,9 +375,9 @@ QDebug operator<<(QDebug d, const TokenType &t)
 # define DO(x) if (t==x) d << #x; else
   DO(Other) DO(Identifier) DO(Number) DO(String)
   DO(SemiColon) DO(ThreeDots) DO(Comma) DO(Dot) DO(Colon)
-  DO(LParen) DO(RParen) DO(LBracket) 
-  DO(RBracket) DO(LBrace) DO(RBrace) 
-  DO(Kand) DO(Kfalse) DO(Kfunction) DO(Knil) 
+  DO(LParen) DO(RParen) DO(LBracket)
+  DO(RBracket) DO(LBrace) DO(RBrace)
+  DO(Kand) DO(Kfalse) DO(Kfunction) DO(Knil)
   DO(Knot) DO(Kor) DO(Ktrue) DO(Kin)
   DO(Kbreak) DO(Kdo) DO(Kelse) DO(Kelseif) DO(Kend) DO(Kfor)
   DO(Kif) DO(Klocal) DO(Krepeat) DO(Kreturn)
@@ -393,13 +393,13 @@ QDebug operator<<(QDebug d, const TokenType &t)
 
 
 void
-QLuaModeLua::gotToken(UserData *d, int pos, int len, 
+QLuaModeLua::gotToken(UserData *d, int pos, int len,
                       QString s, TokenType ltype)
 {
   PNode &n = d->nodes;
   TokenType ntype = n.type();
 #if DEBUG
-  qDebug() << " node:" << n << ntype << n.pos() << n.len() 
+  qDebug() << " node:" << n << ntype << n.pos() << n.len()
            << n.indent() << n.next().type() << n.next().next().type();
   if (s.isEmpty())
     qDebug() << "  token:" << pos << len << ltype;
@@ -409,8 +409,8 @@ QLuaModeLua::gotToken(UserData *d, int pos, int len,
   // close statements
   if ( ((ntype==Statement)
         && (ltype==Identifier || ltype==Kfunction) ) ||
-       ((ntype==Statement || ntype==StatementCont || 
-         ntype==Klocal || ntype==Kreturn ) 
+       ((ntype==Statement || ntype==StatementCont ||
+         ntype==Klocal || ntype==Kreturn )
         && (ltype==SemiColon || ltype>=FirstStrictKeyword) ) )
     {
       int epos = (ltype==SemiColon) ? pos+len : d->lastPos;
@@ -452,12 +452,12 @@ QLuaModeLua::gotToken(UserData *d, int pos, int len,
       goto rightOne;
 
     case RBracket:
-      if (ntype != LBracket) 
+      if (ntype != LBracket)
         goto badOne;
       goto rightOne;
 
     case RBrace:
-      if (ntype != LBrace) 
+      if (ntype != LBrace)
         goto badOne;
       goto rightOne;
 
@@ -474,7 +474,7 @@ QLuaModeLua::gotToken(UserData *d, int pos, int len,
         if (ltype < FirstKeyword)
           indent = qMin(qMax(0,indent-bi),e->indentAt(fpos));
         else
-          indent = n.indent(); 
+          indent = n.indent();
         setIndent(pos, indent);
         setIndent(pos+len, n.indent());
         setBalance(fpos, pos+len, n.type()==Chunk);
@@ -512,7 +512,7 @@ QLuaModeLua::gotToken(UserData *d, int pos, int len,
         break;
       }
 
-    case Kdo: 
+    case Kdo:
       if (ntype==Kfor || ntype==Kwhile)
         goto middleOne;
       goto leftOne;
@@ -522,14 +522,14 @@ QLuaModeLua::gotToken(UserData *d, int pos, int len,
         goto middleOne;
       goto leftOne;
 
-    case Kfor: case Kif: case Kwhile: 
+    case Kfor: case Kif: case Kwhile:
     case Krepeat: case Klocal: case Kreturn:
     case LParen: case LBracket: case LBrace:
     leftOne:
       {
         int indent = n.indent() + bi;
         if (ltype == LBrace && ntype == StatementCont)
-          indent = n.indent(); 
+          indent = n.indent();
         else if (ltype < FirstKeyword)
           indent = e->indentAfter(pos+len);
         setIndent(pos, n.indent());
@@ -539,7 +539,7 @@ QLuaModeLua::gotToken(UserData *d, int pos, int len,
         break;
       }
 
-    case SemiColon: 
+    case SemiColon:
     case Eof:
       break;
 
@@ -553,7 +553,7 @@ QLuaModeLua::gotToken(UserData *d, int pos, int len,
     case Dot: case Colon:
       if  (ntype == FunctionName)
         setFormat(pos, len, "function");
-    case Kand: case Kor: case Knot: 
+    case Kand: case Kor: case Knot:
     case Kin: case Comma: case Other:
       if (n.type() == Statement)
         {
@@ -563,7 +563,7 @@ QLuaModeLua::gotToken(UserData *d, int pos, int len,
     default:
     openStatement:
       {
-        if (ntype==Chunk || ntype==Kdo || ntype==Kthen || 
+        if (ntype==Chunk || ntype==Kdo || ntype==Kthen ||
             ntype==Kelse || ntype==Krepeat || ntype==FunctionBody)
           {
             int indent = n.indent() + bi;
@@ -573,7 +573,7 @@ QLuaModeLua::gotToken(UserData *d, int pos, int len,
         else if (ntype==Klocal)
           n->type = StatementCont;
         else if (ntype==Kreturn)
-          n->type = Statement;        
+          n->type = Statement;
         break;
       }
     }
@@ -586,7 +586,7 @@ QLuaModeLua::gotToken(UserData *d, int pos, int len,
 
 
 
-static int 
+static int
 comp_lex(QString s, int len, int state, int n, int &q)
 {
   QChar z;
@@ -597,10 +597,10 @@ comp_lex(QString s, int len, int state, int n, int &q)
         {
         default:
         case -1: // misc
-          if (isalpha(s[p].toAscii()) || s[p]=='_') {
-            q = p; state = -2; 
+          if (isalpha(s[p].toLatin1()) || s[p]=='_') {
+            q = p; state = -2;
           } else if (s[p]=='\'') {
-            q = p+1; z = s[p]; n = 0; state = -3; 
+            q = p+1; z = s[p]; n = 0; state = -3;
           } else if (s[p]=='\"') {
             q = p+1; z = s[p]; n = 0; state = -3;
           } else if (s[p]=='[') {
@@ -614,7 +614,7 @@ comp_lex(QString s, int len, int state, int n, int &q)
             } else
               state = -1;
           } else if (s[p]=='-' && s[p+1]=='-') {
-            n = 0; state = -4; 
+            n = 0; state = -4;
             if (s[p+2]=='[') {
               int t = p + 3;
               while (t < len && s[t] == '=')
@@ -625,7 +625,7 @@ comp_lex(QString s, int len, int state, int n, int &q)
           }
           break;
         case -2: // identifier
-          if (!isalnum(s[p].toAscii()) && s[p]!='_' && s[p]!='.' && s[p]!=':') {
+          if (!isalnum(s[p].toLatin1()) && s[p]!='_' && s[p]!='.' && s[p]!=':') {
             state = -1; continue;
           }
           break;
@@ -660,7 +660,7 @@ comp_lex(QString s, int len, int state, int n, int &q)
 }
 
 
-bool 
+bool
 QLuaModeLua::doComplete()
 {
   QString stem;
@@ -676,7 +676,7 @@ QLuaModeLua::doComplete()
   if (pb.isValid())
     {
       UserData *data = static_cast<UserData*>(pb.userData());
-      if (! data) 
+      if (! data)
         return false;
       state = data->lexState;
       n = data->lexN;
@@ -730,7 +730,7 @@ unescapeString(const char *s)
           if (*s >= '0' && *s <= '7')
             c = c * 8 + *s++ - '0';
           r += c;
-        } else 
+        } else
           r += c;
       }
     }
@@ -776,7 +776,7 @@ escapeString(QString s)
 }
 
 
-QStringList 
+QStringList
 QLuaModeLua::computeFileCompletions(QString s, bool escape, QString &stem)
 {
   QStringList list;
@@ -785,7 +785,7 @@ QLuaModeLua::computeFileCompletions(QString s, bool escape, QString &stem)
   if (escape)
     stem = unescapeString(s);
   fileCompletion(stem, list);
-  if (escape) 
+  if (escape)
     {
       QStringList nl;
       foreach(QString s, list)
@@ -798,17 +798,17 @@ QLuaModeLua::computeFileCompletions(QString s, bool escape, QString &stem)
 
 
 static const char *
-comp_keywords[] = 
+comp_keywords[] =
   {
-    "and", "break", "do", "else", "elseif", 
+    "and", "break", "do", "else", "elseif",
     "end", "false", "for", "function",
-    "if", "in", "local", "nil", "not", 
+    "if", "in", "local", "nil", "not",
     "or", "repeat", "return", "then",
     "true", "until", "while", 0
   };
 
 
-QStringList 
+QStringList
 QLuaModeLua::computeSymbolCompletions(QString s, QString &stem)
 {
   QStringList list;

@@ -144,8 +144,11 @@ template<typename T> inline T*
 luaQ_checkqobject(lua_State *L, int index, T* = 0)
 {
   T *obj = qobject_cast<T*>(luaQ_toqobject(L, index));
-  if (! obj) 
-    luaL_typerror(L, index, T::staticMetaObject.className());
+  if (! obj) {
+    //luaL_typerror(L, index, T::staticMetaObject.className());
+    lua_pushstring(L, T::staticMetaObject.className());
+    lua_error(L);
+  }
   return obj;
 }
 
@@ -154,9 +157,12 @@ luaQ_checkqvariant(lua_State *L, int index, T* = 0)
 {
   int type = qMetaTypeId<T>();
   QVariant v = luaQ_toqvariant(L, index, type);
-  if (v.userType() != type)
-    luaL_typerror(L, index, QMetaType::typeName(type));
-  return qVariantValue<T>(v);
+  if (v.userType() != type){
+    //luaL_typerror(L, index, QMetaType::typeName(type));
+    lua_pushstring(L, "");
+    lua_error(L);
+  }
+  return v.value<T>();
 }
 
 template<typename T> inline T*
