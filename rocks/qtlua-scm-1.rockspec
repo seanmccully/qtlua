@@ -2,7 +2,7 @@ package = "qtlua"
 version = "scm-1"
 
 source = {
-   url = "git://github.com/torch/qtlua.git",
+   url = "git://github.com/seanmccully/qtlua.git",
 }
 
 description = {
